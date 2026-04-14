@@ -53,6 +53,46 @@ export const DEFAULT_LLM_CONFIGS: Record<LlmProvider, ApiConfig> = {
     maxTokens: 8192,
     temperature: 0.85,
   },
+  doubao: {
+    provider: 'doubao',
+    baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
+    apiKey: '',
+    model: 'ep-20241203163449-j7x68',
+    maxTokens: 8192,
+    temperature: 0.85,
+  },
+  zhipu: {
+    provider: 'zhipu',
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+    apiKey: '',
+    model: 'glm-4-flash',
+    maxTokens: 8192,
+    temperature: 0.85,
+  },
+  wenxin: {
+    provider: 'wenxin',
+    baseUrl: 'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat',
+    apiKey: '',
+    model: 'ernie-4.0-turbo-8k',
+    maxTokens: 8192,
+    temperature: 0.85,
+  },
+  moonshot: {
+    provider: 'moonshot',
+    baseUrl: 'https://api.moonshot.cn/v1',
+    apiKey: '',
+    model: 'moonshot-v1-8k',
+    maxTokens: 8192,
+    temperature: 0.85,
+  },
+  kimi: {
+    provider: 'kimi',
+    baseUrl: 'https://api.moonshot.cn/v1',
+    apiKey: '',
+    model: 'moonshot-v1-8k',
+    maxTokens: 8192,
+    temperature: 0.85,
+  },
 };
 
 export const DEFAULT_AI_DETECTION_CONFIGS: Record<AiDetectionProvider, AiDetectionConfig> = {
@@ -74,6 +114,26 @@ export const DEFAULT_AI_DETECTION_CONFIGS: Record<AiDetectionProvider, AiDetecti
     provider: 'copyscape',
     apiKey: '',
     baseUrl: 'https://www.copyscape.com/api',
+  },
+  gptzero: {
+    provider: 'gptzero',
+    apiKey: '',
+    baseUrl: 'https://api.gptzero.me/v2',
+  },
+  contentatscale: {
+    provider: 'contentatscale',
+    apiKey: '',
+    baseUrl: 'https://api.contentatscale.ai/v1',
+  },
+  scribbr: {
+    provider: 'scribbr',
+    apiKey: '',
+    baseUrl: 'https://api.scribbr.com',
+  },
+  zerogpt: {
+    provider: 'zerogpt',
+    apiKey: '',
+    baseUrl: 'https://api.zerogpt.com/api',
   },
 };
 
@@ -423,6 +483,14 @@ export async function callAiDetectionApi(content: string): Promise<AiDetectionRe
       return callWinstonAi(content, config);
     case 'copyscape':
       return callCopyscape(content, config);
+    case 'gptzero':
+      return callGptZero(content, config);
+    case 'contentatscale':
+      return callContentAtScale(content, config);
+    case 'scribbr':
+      return callScribbr(content, config);
+    case 'zerogpt':
+      return callZeroGpt(content, config);
     default:
       throw new Error(`Unsupported AI detection provider: ${config.provider}`);
   }
@@ -500,6 +568,112 @@ async function callWinstonAi(content: string, config: AiDetectionConfig): Promis
 
 async function callCopyscape(content: string, config: AiDetectionConfig): Promise<AiDetectionResult> {
   throw new Error('Copyscape integration coming soon');
+}
+
+async function callGptZero(content: string, config: AiDetectionConfig): Promise<AiDetectionResult> {
+  if (!config.apiKey) {
+    throw new Error('请配置 GPTZero API Key');
+  }
+
+  const response = await fetch(`${config.baseUrl}/predict/text`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Api-Key': config.apiKey,
+    },
+    body: JSON.stringify({
+      document: content,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`GPTZero API 请求失败: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const aiScore = Math.round((data.documents?.[0]?.completely_generated_prob || 0) * 100);
+
+  return {
+    overallScore: aiScore,
+    segments: [{
+      text: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
+      aiProbability: aiScore,
+      label: aiScore > 70 ? '高疑似AI' : aiScore > 40 ? '疑似AI' : '疑似人工',
+      confidence: Math.abs(aiScore - 50) * 2,
+    }],
+  };
+}
+
+async function callContentAtScale(content: string, config: AiDetectionConfig): Promise<AiDetectionResult> {
+  if (!config.apiKey) {
+    throw new Error('请配置 Content at Scale API Key');
+  }
+
+  const response = await fetch(`${config.baseUrl}/detect-ai`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${config.apiKey}`,
+    },
+    body: JSON.stringify({
+      content,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Content at Scale API 请求失败: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const aiScore = Math.round((data.ai_score || 0) * 100);
+
+  return {
+    overallScore: aiScore,
+    segments: [{
+      text: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
+      aiProbability: aiScore,
+      label: aiScore > 70 ? '高疑似AI' : aiScore > 40 ? '疑似AI' : '疑似人工',
+      confidence: Math.abs(aiScore - 50) * 2,
+    }],
+  };
+}
+
+async function callScribbr(content: string, config: AiDetectionConfig): Promise<AiDetectionResult> {
+  throw new Error('Scribbr integration coming soon');
+}
+
+async function callZeroGpt(content: string, config: AiDetectionConfig): Promise<AiDetectionResult> {
+  if (!config.apiKey) {
+    throw new Error('请配置 ZeroGPT API Key');
+  }
+
+  const response = await fetch(`${config.baseUrl}/detectText`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      text: content,
+      api_key: config.apiKey,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`ZeroGPT API 请求失败: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const aiScore = Math.round(data.fakePercentage || 0);
+
+  return {
+    overallScore: aiScore,
+    segments: [{
+      text: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
+      aiProbability: aiScore,
+      label: aiScore > 70 ? '高疑似AI' : aiScore > 40 ? '疑似AI' : '疑似人工',
+      confidence: Math.abs(aiScore - 50) * 2,
+    }],
+  };
 }
 
 // ==================== 内容安全 API ====================

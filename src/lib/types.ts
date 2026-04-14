@@ -1,10 +1,10 @@
 // 自媒体多工作平台类型定义
 
 // 大模型提供商类型
-export type LlmProvider = 'dashscope' | 'openai' | 'anthropic' | 'deepseek' | 'openai-compatible';
+export type LlmProvider = 'dashscope' | 'openai' | 'anthropic' | 'deepseek' | 'openai-compatible' | 'doubao' | 'zhipu' | 'wenxin' | 'moonshot' | 'kimi';
 
 // AI 检测服务提供商类型
-export type AiDetectionProvider = 'originality' | 'winston' | 'copyscape' | 'local';
+export type AiDetectionProvider = 'originality' | 'winston' | 'copyscape' | 'local' | 'gptzero' | 'contentatscale' | 'scribbr' | 'zerogpt';
 
 // 内容安全服务提供商类型
 export type ContentSafetyProvider = 'aliyun' | 'tencent' | 'baidu' | 'local';

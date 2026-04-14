@@ -42,6 +42,11 @@ export function ApiSettingsView() {
     { name: 'OpenAI', config: DEFAULT_LLM_CONFIGS.openai },
     { name: 'Claude', config: DEFAULT_LLM_CONFIGS.anthropic },
     { name: 'DeepSeek', config: DEFAULT_LLM_CONFIGS.deepseek },
+    { name: '豆包', config: DEFAULT_LLM_CONFIGS.doubao },
+    { name: '智谱', config: DEFAULT_LLM_CONFIGS.zhipu },
+    { name: '文心一言', config: DEFAULT_LLM_CONFIGS.wenxin },
+    { name: 'Moonshot', config: DEFAULT_LLM_CONFIGS.moonshot },
+    { name: 'Kimi', config: DEFAULT_LLM_CONFIGS.kimi },
     { name: '自定义', config: DEFAULT_LLM_CONFIGS['openai-compatible'] },
   ];
 
@@ -50,6 +55,10 @@ export function ApiSettingsView() {
     { name: 'Originality.ai', config: DEFAULT_AI_DETECTION_CONFIGS.originality },
     { name: 'Winston AI', config: DEFAULT_AI_DETECTION_CONFIGS.winston },
     { name: 'Copyscape', config: DEFAULT_AI_DETECTION_CONFIGS.copyscape },
+    { name: 'GPTZero', config: DEFAULT_AI_DETECTION_CONFIGS.gptzero },
+    { name: 'Content at Scale', config: DEFAULT_AI_DETECTION_CONFIGS.contentatscale },
+    { name: 'Scribbr', config: DEFAULT_AI_DETECTION_CONFIGS.scribbr },
+    { name: 'ZeroGPT', config: DEFAULT_AI_DETECTION_CONFIGS.zerogpt },
   ];
 
   const contentSafetyPresets: Array<{ name: string; config: ContentSafetyConfig }> = [
@@ -201,6 +210,11 @@ export function ApiSettingsView() {
                       <SelectItem value="openai">OpenAI</SelectItem>
                       <SelectItem value="anthropic">Claude</SelectItem>
                       <SelectItem value="deepseek">DeepSeek</SelectItem>
+                      <SelectItem value="doubao">豆包</SelectItem>
+                      <SelectItem value="zhipu">智谱</SelectItem>
+                      <SelectItem value="wenxin">文心一言</SelectItem>
+                      <SelectItem value="moonshot">Moonshot</SelectItem>
+                      <SelectItem value="kimi">Kimi</SelectItem>
                       <SelectItem value="openai-compatible">自定义兼容</SelectItem>
                     </SelectContent>
                   </Select>
