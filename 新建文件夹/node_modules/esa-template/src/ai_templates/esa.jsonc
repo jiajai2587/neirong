@@ -1,0 +1,10 @@
+{
+  "name": "DeepSeek model invocation",
+  "description": "How to invoke DeepSeek series models through API calls on the BaiLian platform.",
+  "entry": "./src/index.js",
+  "codeVersions": [],
+  "dev": {
+    "port": 18080,
+    "localUpstream": ""
+  }
+}

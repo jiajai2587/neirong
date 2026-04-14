@@ -1,0 +1,10 @@
+{
+  "name": "React SSR Demo",
+  "description": "SSR Demo",
+  "entry": "./src/index.js",
+  "codeVersions": [],
+  "dev": {
+    "port": 18080,
+    "localUpstream": ""
+  }
+}
