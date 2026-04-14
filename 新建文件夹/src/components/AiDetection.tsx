@@ -18,14 +18,17 @@ export function AiDetection({ content }: AiDetectionProps) {
   const [expandedSegments, setExpandedSegments] = useState<Set<number>>(new Set());
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!content.trim()) return;
     setIsAnalyzing(true);
-    setTimeout(() => {
-      const res = analyzeAiDetection(content);
+    try {
+      const res = await analyzeAiDetection(content);
       setResult(res);
+    } catch (error) {
+      console.error('AI 检测失败:', error);
+    } finally {
       setIsAnalyzing(false);
-    }, 1500);
+    }
   };
 
   const toggleSegment = (index: number) => {

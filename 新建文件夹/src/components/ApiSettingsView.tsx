@@ -5,64 +5,83 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Settings, Key, Globe, Save, Check, AlertTriangle, TestTube, Eye, EyeOff, MessageCircle } from 'lucide-react';
+import { Settings, Key, Globe, Save, Check, AlertTriangle, TestTube, Eye, EyeOff, MessageCircle, Bot, Shield, ScanFace } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ApiConfig } from '@/lib/types';
-import { getApiConfig, saveApiConfig, callAiApi } from '@/lib/api';
+import type { ApiConfig, AiDetectionConfig, ContentSafetyConfig, LlmProvider, AiDetectionProvider, ContentSafetyProvider } from '@/lib/types';
+import {
+  getAppConfig,
+  saveAppConfig,
+  getLlmConfig,
+  saveLlmConfig,
+  getAiDetectionConfig,
+  saveAiDetectionConfig,
+  getContentSafetyConfig,
+  saveContentSafetyConfig,
+  callAiApi,
+  DEFAULT_LLM_CONFIGS,
+  DEFAULT_AI_DETECTION_CONFIGS,
+  DEFAULT_CONTENT_SAFETY_CONFIGS,
+} from '@/lib/api';
 
 export function ApiSettingsView() {
-  const [config, setConfig] = useState<ApiConfig>(getApiConfig());
-  const [showKey, setShowKey] = useState(false);
+  const [activeTab, setActiveTab] = useState('llm');
+  const [llmConfig, setLlmConfig] = useState<ApiConfig>(getLlmConfig());
+  const [aiDetectionConfig, setAiDetectionConfig] = useState<AiDetectionConfig>(getAiDetectionConfig());
+  const [contentSafetyConfig, setContentSafetyConfig] = useState<ContentSafetyConfig>(getContentSafetyConfig());
+  const [showLlmKey, setShowLlmKey] = useState(false);
+  const [showAiDetectionKey, setShowAiDetectionKey] = useState(false);
+  const [showContentSafetyKey, setShowContentSafetyKey] = useState(false);
   const [saved, setSaved] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
-  const presets = [
-    { name: 'OpenAI', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o', provider: 'openai' },
-    { name: 'Claude (Anthropic)', baseUrl: 'https://api.anthropic.com/v1', model: 'claude-3-5-sonnet-20241022', provider: 'anthropic' },
-    { name: '智谱 AI', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-4', provider: 'zhipu' },
-    { name: '通义千问', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-turbo', provider: 'dashscope' },
-    { name: '文心一言', baseUrl: 'https://qianfan.baidubce.com/v2', model: 'ernie-4.0-8k', provider: 'baidu' },
-    { name: 'Moonshot (Kimi)', baseUrl: 'https://api.moonshot.cn/v1', model: 'moonshot-v1-8k', provider: 'moonshot' },
-    { name: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat', provider: 'deepseek' },
-    { name: '豆包 (Doubao)', baseUrl: 'https://ark.cn-beijing.volces.com/api/v3', model: 'ep-20241201000000-xxxxx', provider: 'doubao' },
-    { name: '自定义', baseUrl: '', model: '', provider: 'custom' },
+  const llmPresets: Array<{ name: string; config: ApiConfig }> = [
+    { name: '通义千问', config: DEFAULT_LLM_CONFIGS.dashscope },
+    { name: 'OpenAI', config: DEFAULT_LLM_CONFIGS.openai },
+    { name: 'Claude', config: DEFAULT_LLM_CONFIGS.anthropic },
+    { name: 'DeepSeek', config: DEFAULT_LLM_CONFIGS.deepseek },
+    { name: '自定义', config: DEFAULT_LLM_CONFIGS['openai-compatible'] },
   ];
 
-  const handlePresetChange = useCallback((presetName: string) => {
-    const preset = presets.find(p => p.name === presetName);
-    if (preset) {
-      setConfig(prev => ({
-        ...prev,
-        provider: preset.provider,
-        baseUrl: preset.baseUrl,
-        model: preset.model,
-      }));
-    }
-  }, []);
+  const aiDetectionPresets: Array<{ name: string; config: AiDetectionConfig }> = [
+    { name: '本地检测', config: DEFAULT_AI_DETECTION_CONFIGS.local },
+    { name: 'Originality.ai', config: DEFAULT_AI_DETECTION_CONFIGS.originality },
+    { name: 'Winston AI', config: DEFAULT_AI_DETECTION_CONFIGS.winston },
+    { name: 'Copyscape', config: DEFAULT_AI_DETECTION_CONFIGS.copyscape },
+  ];
+
+  const contentSafetyPresets: Array<{ name: string; config: ContentSafetyConfig }> = [
+    { name: '本地检测', config: DEFAULT_CONTENT_SAFETY_CONFIGS.local },
+    { name: '阿里云内容安全', config: DEFAULT_CONTENT_SAFETY_CONFIGS.aliyun },
+    { name: '腾讯云内容安全', config: DEFAULT_CONTENT_SAFETY_CONFIGS.tencent },
+    { name: '百度内容安全', config: DEFAULT_CONTENT_SAFETY_CONFIGS.baidu },
+  ];
 
   const handleSave = useCallback(() => {
-    saveApiConfig(config);
+    saveLlmConfig(llmConfig);
+    saveAiDetectionConfig(aiDetectionConfig);
+    saveContentSafetyConfig(contentSafetyConfig);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
-  }, [config]);
+  }, [llmConfig, aiDetectionConfig, contentSafetyConfig]);
 
-  const handleTest = useCallback(async () => {
-    if (!config.apiKey) {
+  const handleTestLlm = useCallback(async () => {
+    if (!llmConfig.apiKey) {
       setTestResult({ success: false, message: '请先输入 API Key' });
       return;
     }
     setTesting(true);
     setTestResult(null);
     try {
-      const result = await callAiApi('你好，请回复"连接成功"四个字', '你是一个测试助手，只需要回复"连接成功"四个字，不要回复其他内容。', config);
+      const result = await callAiApi('你好，请回复"连接成功"四个字', '你是一个测试助手，只需要回复"连接成功"四个字，不要回复其他内容。', llmConfig);
       setTestResult({ success: true, message: `连接成功！AI 回复：${result}` });
     } catch (error: any) {
       setTestResult({ success: false, message: error.message || '连接失败，请检查配置' });
     }
     setTesting(false);
-  }, [config]);
+  }, [llmConfig]);
 
   return (
     <div className="space-y-4">
@@ -74,185 +93,359 @@ export function ApiSettingsView() {
             </div>
             <div>
               <CardTitle className="text-lg">API 接口设置</CardTitle>
-              <CardDescription>配置你的 AI 模型 API，支持多种主流 AI 服务</CardDescription>
+              <CardDescription>配置大模型、AI 检测和内容安全服务</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3 mb-6 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">📋 如何配置 API？</p>
-            <p>本平台支持对接多种 AI 大模型 API，配置后即可使用 AI 润色、智能分析等功能。</p>
-            <p>步骤：</p>
-            <ol className="list-decimal list-inside space-y-1 ml-2">
-              <li>选择你要使用的 AI 服务商（预设或自定义）</li>
-              <li>填入对应的 API Base URL</li>
-              <li>填入你的 API Key（密钥）</li>
-              <li>选择或输入模型名称</li>
-              <li>点击"测试连接"验证配置是否正确</li>
-              <li>点击"保存配置"保存设置</li>
-            </ol>
-            <p className="text-xs mt-2 text-amber-500 flex items-center gap-1">
-              <AlertTriangle className="w-3 h-3" />
-              API Key 仅保存在本地浏览器中，不会上传到任何服务器
-            </p>
-          </div>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="llm" className="flex items-center gap-2">
+                <Bot className="w-4 h-4" />
+                大模型
+              </TabsTrigger>
+              <TabsTrigger value="ai-detection" className="flex items-center gap-2">
+                <ScanFace className="w-4 h-4" />
+                AI 检测
+              </TabsTrigger>
+              <TabsTrigger value="content-safety" className="flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                内容安全
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Preset Selection */}
-          <div className="space-y-4">
-            <div>
-              <Label className="text-sm font-medium mb-2 block">快速选择服务商</Label>
-              <div className="flex flex-wrap gap-2">
-                {presets.map(preset => (
-                  <button
-                    key={preset.name}
-                    onClick={() => handlePresetChange(preset.name)}
-                    className={cn(
-                      'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
-                      config.provider === preset.provider
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
-                    )}
-                  >
-                    {preset.name}
-                  </button>
-                ))}
+            <TabsContent value="llm" className="space-y-4 mt-4">
+              <div className="space-y-3 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">🤖 大模型配置</p>
+                <p>配置用于文章生成、润色等功能的 AI 大模型。</p>
+                <p className="text-xs mt-2 text-amber-500 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  API Key 仅保存在本地浏览器中，不会上传到任何服务器
+                </p>
               </div>
-            </div>
 
-            {/* API Configuration */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">API Base URL</Label>
-                <div className="relative">
-                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    value={config.baseUrl}
-                    onChange={e => setConfig(prev => ({ ...prev, baseUrl: e.target.value }))}
-                    placeholder="https://api.openai.com/v1"
-                    className="pl-9"
-                  />
+              <div>
+                <Label className="text-sm font-medium mb-2 block">快速选择服务商</Label>
+                <div className="flex flex-wrap gap-2">
+                  {llmPresets.map(preset => (
+                    <button
+                      key={preset.name}
+                      onClick={() => setLlmConfig(preset.config)}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
+                        llmConfig.provider === preset.config.provider
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
+                      )}
+                    >
+                      {preset.name}
+                    </button>
+                  ))}
                 </div>
-                <p className="text-xs text-muted-foreground">API 请求的基础地址</p>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">API Key</Label>
-                <div className="relative">
-                  <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    type={showKey ? 'text' : 'password'}
-                    value={config.apiKey}
-                    onChange={e => setConfig(prev => ({ ...prev, apiKey: e.target.value }))}
-                    placeholder="sk-..."
-                    className="pl-9 pr-10"
-                  />
-                  <button
-                    onClick={() => setShowKey(!showKey)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                <p className="text-xs text-muted-foreground">你的 API 密钥，仅保存在本地</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">模型名称</Label>
-                <Input
-                  value={config.model}
-                  onChange={e => setConfig(prev => ({ ...prev, model: e.target.value }))}
-                  placeholder="gpt-4o"
-                />
-                <p className="text-xs text-muted-foreground">要使用的 AI 模型名称</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">提供商</Label>
-                <Input
-                  value={config.provider}
-                  onChange={e => setConfig(prev => ({ ...prev, provider: e.target.value }))}
-                  placeholder="openai"
-                />
-                <p className="text-xs text-muted-foreground">API 提供商标识</p>
-              </div>
-            </div>
-
-            {/* Advanced Settings */}
-            <div className="p-4 rounded-lg border border-border space-y-4">
-              <h3 className="text-sm font-medium">高级设置</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-sm">最大 Token 数</Label>
-                    <span className="text-sm text-muted-foreground">{config.maxTokens}</span>
+                  <Label className="text-sm font-medium">API Base URL</Label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      value={llmConfig.baseUrl}
+                      onChange={e => setLlmConfig(prev => ({ ...prev, baseUrl: e.target.value }))}
+                      placeholder="https://api.openai.com/v1"
+                      className="pl-9"
+                    />
                   </div>
-                  <Slider
-                    value={[config.maxTokens]}
-                    onValueChange={([v]) => setConfig(prev => ({ ...prev, maxTokens: v }))}
-                    min={256}
-                    max={8192}
-                    step={256}
-                  />
                 </div>
+
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-sm">Temperature（创造性）</Label>
-                    <span className="text-sm text-muted-foreground">{config.temperature.toFixed(1)}</span>
+                  <Label className="text-sm font-medium">API Key</Label>
+                  <div className="relative">
+                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type={showLlmKey ? 'text' : 'password'}
+                      value={llmConfig.apiKey}
+                      onChange={e => setLlmConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                      placeholder="sk-..."
+                      className="pl-9 pr-10"
+                    />
+                    <button
+                      onClick={() => setShowLlmKey(!showLlmKey)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showLlmKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
-                  <Slider
-                    value={[config.temperature]}
-                    onValueChange={([v]) => setConfig(prev => ({ ...prev, temperature: v }))}
-                    min={0}
-                    max={2}
-                    step={0.1}
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">模型名称</Label>
+                  <Input
+                    value={llmConfig.model}
+                    onChange={e => setLlmConfig(prev => ({ ...prev, model: e.target.value }))}
+                    placeholder="gpt-4o"
                   />
-                  <p className="text-xs text-muted-foreground">值越高输出越有创造性，值越低输出越确定</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">提供商</Label>
+                  <Select
+                    value={llmConfig.provider}
+                    onValueChange={(v: LlmProvider) => setLlmConfig(prev => ({ ...prev, provider: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="dashscope">通义千问</SelectItem>
+                      <SelectItem value="openai">OpenAI</SelectItem>
+                      <SelectItem value="anthropic">Claude</SelectItem>
+                      <SelectItem value="deepseek">DeepSeek</SelectItem>
+                      <SelectItem value="openai-compatible">自定义兼容</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-            </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-3 pt-2">
-              <Button onClick={handleTest} disabled={testing} variant="outline">
-                {testing ? (
-                  <span className="flex items-center gap-2">
-                    <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
-                    测试中...
-                  </span>
-                ) : (
-                  '测试连接'
-                )}
-              </Button>
-              <Button onClick={handleSave} className="flex-1">
-                {saved ? (
-                  <span className="flex items-center gap-2">
-                    <Check className="w-4 h-4" />
-                    已保存
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <Save className="w-4 h-4" />
-                    保存配置
-                  </span>
-                )}
-              </Button>
-            </div>
-
-            {/* Test Result */}
-            {testResult && (
-              <div className={cn(
-                'p-3 rounded-lg text-sm',
-                testResult.success ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
-              )}>
-                <p className="font-medium">{testResult.success ? '✅ 连接成功' : '❌ 连接失败'}</p>
-                <p className="text-xs mt-1 opacity-80">{testResult.message}</p>
+              <div className="p-4 rounded-lg border border-border space-y-4">
+                <h3 className="text-sm font-medium">高级设置</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm">最大 Token 数</Label>
+                      <span className="text-sm text-muted-foreground">{llmConfig.maxTokens}</span>
+                    </div>
+                    <Slider
+                      value={[llmConfig.maxTokens]}
+                      onValueChange={([v]) => setLlmConfig(prev => ({ ...prev, maxTokens: v }))}
+                      min={256}
+                      max={8192}
+                      step={256}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm">Temperature（创造性）</Label>
+                      <span className="text-sm text-muted-foreground">{llmConfig.temperature.toFixed(1)}</span>
+                    </div>
+                    <Slider
+                      value={[llmConfig.temperature]}
+                      onValueChange={([v]) => setLlmConfig(prev => ({ ...prev, temperature: v }))}
+                      min={0}
+                      max={2}
+                      step={0.1}
+                    />
+                  </div>
+                </div>
               </div>
-            )}
+
+              <div className="flex items-center gap-3">
+                <Button onClick={handleTestLlm} disabled={testing} variant="outline">
+                  {testing ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                      测试中...
+                    </span>
+                  ) : (
+                    '测试连接'
+                  )}
+                </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="ai-detection" className="space-y-4 mt-4">
+              <div className="space-y-3 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">🔍 AI 内容检测配置</p>
+                <p>配置用于检测 AI 生成内容、同质化等功能的服务。</p>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium mb-2 block">选择检测服务</Label>
+                <div className="flex flex-wrap gap-2">
+                  {aiDetectionPresets.map(preset => (
+                    <button
+                      key={preset.name}
+                      onClick={() => setAiDetectionConfig(preset.config)}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
+                        aiDetectionConfig.provider === preset.config.provider
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
+                      )}
+                    >
+                      {preset.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {aiDetectionConfig.provider !== 'local' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">API Base URL</Label>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        value={aiDetectionConfig.baseUrl || ''}
+                        onChange={e => setAiDetectionConfig(prev => ({ ...prev, baseUrl: e.target.value }))}
+                        className="pl-9"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">API Key</Label>
+                    <div className="relative">
+                      <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        type={showAiDetectionKey ? 'text' : 'password'}
+                        value={aiDetectionConfig.apiKey}
+                        onChange={e => setAiDetectionConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                        placeholder="输入 API Key"
+                        className="pl-9 pr-10"
+                      />
+                      <button
+                        onClick={() => setShowAiDetectionKey(!showAiDetectionKey)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showAiDetectionKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="content-safety" className="space-y-4 mt-4">
+              <div className="space-y-3 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">🛡️ 内容安全检测配置</p>
+                <p>配置用于检测敏感词、违规内容的服务。</p>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium mb-2 block">选择内容安全服务</Label>
+                <div className="flex flex-wrap gap-2">
+                  {contentSafetyPresets.map(preset => (
+                    <button
+                      key={preset.name}
+                      onClick={() => setContentSafetyConfig(preset.config)}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
+                        contentSafetyConfig.provider === preset.config.provider
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
+                      )}
+                    >
+                      {preset.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {contentSafetyConfig.provider !== 'local' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {contentSafetyConfig.provider === 'aliyun' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">AccessKey ID</Label>
+                        <Input
+                          value={contentSafetyConfig.accessKeyId || ''}
+                          onChange={e => setContentSafetyConfig(prev => ({ ...prev, accessKeyId: e.target.value }))}
+                          placeholder="输入 AccessKey ID"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">AccessKey Secret</Label>
+                        <div className="relative">
+                          <Input
+                            type={showContentSafetyKey ? 'text' : 'password'}
+                            value={contentSafetyConfig.accessKeySecret || ''}
+                            onChange={e => setContentSafetyConfig(prev => ({ ...prev, accessKeySecret: e.target.value }))}
+                            placeholder="输入 AccessKey Secret"
+                            className="pr-10"
+                          />
+                          <button
+                            onClick={() => setShowContentSafetyKey(!showContentSafetyKey)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            {showContentSafetyKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">区域</Label>
+                        <Input
+                          value={contentSafetyConfig.region || ''}
+                          onChange={e => setContentSafetyConfig(prev => ({ ...prev, region: e.target.value }))}
+                          placeholder="cn-shanghai"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {(contentSafetyConfig.provider === 'tencent' || contentSafetyConfig.provider === 'baidu') && (
+                    <>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">API Key / SecretId</Label>
+                        <Input
+                          value={contentSafetyConfig.apiKey || ''}
+                          onChange={e => setContentSafetyConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                          placeholder="输入 API Key"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Secret Key</Label>
+                        <div className="relative">
+                          <Input
+                            type={showContentSafetyKey ? 'text' : 'password'}
+                            value={contentSafetyConfig.secretKey || ''}
+                            onChange={e => setContentSafetyConfig(prev => ({ ...prev, secretKey: e.target.value }))}
+                            placeholder="输入 Secret Key"
+                            className="pr-10"
+                          />
+                          <button
+                            onClick={() => setShowContentSafetyKey(!showContentSafetyKey)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            {showContentSafetyKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+
+          <div className="flex items-center gap-3 pt-4 border-t mt-4">
+            <Button onClick={handleSave} className="flex-1">
+              {saved ? (
+                <span className="flex items-center gap-2">
+                  <Check className="w-4 h-4" />
+                  已保存
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <Save className="w-4 h-4" />
+                  保存所有配置
+                </span>
+              )}
+            </Button>
           </div>
+
+          {testResult && (
+            <div className={cn(
+              'p-3 rounded-lg text-sm mt-4',
+              testResult.success ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
+            )}>
+              <p className="font-medium">{testResult.success ? '✅ 连接成功' : '❌ 连接失败'}</p>
+              <p className="text-xs mt-1 opacity-80">{testResult.message}</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Contact Info */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">联系作者</CardTitle>

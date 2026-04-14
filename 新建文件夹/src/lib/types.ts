@@ -1,12 +1,46 @@
 // 自媒体多工作平台类型定义
 
+// 大模型提供商类型
+export type LlmProvider = 'dashscope' | 'openai' | 'anthropic' | 'deepseek' | 'openai-compatible';
+
+// AI 检测服务提供商类型
+export type AiDetectionProvider = 'originality' | 'winston' | 'copyscape' | 'local';
+
+// 内容安全服务提供商类型
+export type ContentSafetyProvider = 'aliyun' | 'tencent' | 'baidu' | 'local';
+
 export interface ApiConfig {
-  provider: string;
+  provider: LlmProvider;
   baseUrl: string;
   apiKey: string;
   model: string;
   maxTokens: number;
   temperature: number;
+}
+
+// AI 检测配置
+export interface AiDetectionConfig {
+  provider: AiDetectionProvider;
+  apiKey: string;
+  baseUrl?: string;
+}
+
+// 内容安全配置
+export interface ContentSafetyConfig {
+  provider: ContentSafetyProvider;
+  accessKeyId?: string;
+  accessKeySecret?: string;
+  secretId?: string;
+  secretKey?: string;
+  apiKey?: string;
+  region?: string;
+}
+
+// 完整应用配置
+export interface AppConfig {
+  llm: ApiConfig;
+  aiDetection: AiDetectionConfig;
+  contentSafety: ContentSafetyConfig;
 }
 
 export interface AiDetectionResult {

@@ -1,62 +1,232 @@
-import type { ApiConfig } from './types';
+import type {
+  ApiConfig,
+  LlmProvider,
+  AiDetectionConfig,
+  AiDetectionProvider,
+  ContentSafetyConfig,
+  ContentSafetyProvider,
+  AppConfig,
+  AiDetectionResult,
+  SensitiveCheckResult,
+} from './types';
 
-// 默认 API 配置 - 默认使用通义千问（qwen-turbo 有免费额度）
-export const DEFAULT_API_CONFIG: ApiConfig = {
-  provider: 'dashscope',
-  baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-  apiKey: '',
-  model: 'qwen-turbo',
-  maxTokens: 8192,
-  temperature: 0.85,
+// ==================== 默认配置 ====================
+
+export const DEFAULT_LLM_CONFIGS: Record<LlmProvider, ApiConfig> = {
+  dashscope: {
+    provider: 'dashscope',
+    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    apiKey: '',
+    model: 'qwen-turbo',
+    maxTokens: 8192,
+    temperature: 0.85,
+  },
+  openai: {
+    provider: 'openai',
+    baseUrl: 'https://api.openai.com/v1',
+    apiKey: '',
+    model: 'gpt-4o',
+    maxTokens: 8192,
+    temperature: 0.85,
+  },
+  anthropic: {
+    provider: 'anthropic',
+    baseUrl: 'https://api.anthropic.com/v1',
+    apiKey: '',
+    model: 'claude-3-5-sonnet-20241022',
+    maxTokens: 8192,
+    temperature: 0.85,
+  },
+  deepseek: {
+    provider: 'deepseek',
+    baseUrl: 'https://api.deepseek.com/v1',
+    apiKey: '',
+    model: 'deepseek-chat',
+    maxTokens: 8192,
+    temperature: 0.85,
+  },
+  'openai-compatible': {
+    provider: 'openai-compatible',
+    baseUrl: 'https://api.example.com/v1',
+    apiKey: '',
+    model: 'gpt-4',
+    maxTokens: 8192,
+    temperature: 0.85,
+  },
 };
 
-// 获取本地存储的 API 配置
-export function getApiConfig(): ApiConfig {
-  const stored = localStorage.getItem('api_config');
+export const DEFAULT_AI_DETECTION_CONFIGS: Record<AiDetectionProvider, AiDetectionConfig> = {
+  local: {
+    provider: 'local',
+    apiKey: '',
+  },
+  originality: {
+    provider: 'originality',
+    apiKey: '',
+    baseUrl: 'https://api.originality.ai/api/v1',
+  },
+  winston: {
+    provider: 'winston',
+    apiKey: '',
+    baseUrl: 'https://api.gowinston.ai',
+  },
+  copyscape: {
+    provider: 'copyscape',
+    apiKey: '',
+    baseUrl: 'https://www.copyscape.com/api',
+  },
+};
+
+export const DEFAULT_CONTENT_SAFETY_CONFIGS: Record<ContentSafetyProvider, ContentSafetyConfig> = {
+  local: {
+    provider: 'local',
+  },
+  aliyun: {
+    provider: 'aliyun',
+    accessKeyId: '',
+    accessKeySecret: '',
+    region: 'cn-shanghai',
+  },
+  tencent: {
+    provider: 'tencent',
+    secretId: '',
+    secretKey: '',
+    region: 'ap-guangzhou',
+  },
+  baidu: {
+    provider: 'baidu',
+    apiKey: '',
+    secretKey: '',
+  },
+};
+
+export const DEFAULT_APP_CONFIG: AppConfig = {
+  llm: DEFAULT_LLM_CONFIGS.dashscope,
+  aiDetection: DEFAULT_AI_DETECTION_CONFIGS.local,
+  contentSafety: DEFAULT_CONTENT_SAFETY_CONFIGS.local,
+};
+
+// ==================== 配置存储 ====================
+
+const CONFIG_STORAGE_KEY = 'app_config_v2';
+
+export function getAppConfig(): AppConfig {
+  const stored = localStorage.getItem(CONFIG_STORAGE_KEY);
   if (stored) {
     try {
-      return JSON.parse(stored);
+      return { ...DEFAULT_APP_CONFIG, ...JSON.parse(stored) };
     } catch {
-      return DEFAULT_API_CONFIG;
+      return DEFAULT_APP_CONFIG;
     }
   }
-  return DEFAULT_API_CONFIG;
+  return DEFAULT_APP_CONFIG;
 }
 
-// 保存 API 配置
-export function saveApiConfig(config: ApiConfig): void {
-  localStorage.setItem('api_config', JSON.stringify(config));
+export function saveAppConfig(config: Partial<AppConfig>): void {
+  const current = getAppConfig();
+  const merged = { ...current, ...config };
+  localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(merged));
 }
 
-// 调用 AI API
+export function getLlmConfig(): ApiConfig {
+  return getAppConfig().llm;
+}
+
+export function saveLlmConfig(config: Partial<ApiConfig>): void {
+  const current = getAppConfig();
+  saveAppConfig({ ...current, llm: { ...current.llm, ...config } });
+}
+
+export function getAiDetectionConfig(): AiDetectionConfig {
+  return getAppConfig().aiDetection;
+}
+
+export function saveAiDetectionConfig(config: Partial<AiDetectionConfig>): void {
+  const current = getAppConfig();
+  saveAppConfig({ ...current, aiDetection: { ...current.aiDetection, ...config } });
+}
+
+export function getContentSafetyConfig(): ContentSafetyConfig {
+  return getAppConfig().contentSafety;
+}
+
+export function saveContentSafetyConfig(config: Partial<ContentSafetyConfig>): void {
+  const current = getAppConfig();
+  saveAppConfig({ ...current, contentSafety: { ...current.contentSafety, ...config } });
+}
+
+// 兼容旧版 API 配置
+export function getApiConfig(): ApiConfig {
+  return getLlmConfig();
+}
+
+export function saveApiConfig(config: Partial<ApiConfig>): void {
+  saveLlmConfig(config);
+}
+
+// ==================== 大模型 API 调用 ====================
+
 export async function callAiApi(
   prompt: string,
   systemPrompt?: string,
   config?: Partial<ApiConfig>
 ): Promise<string> {
-  const apiConfig = { ...getApiConfig(), ...config };
+  const apiConfig = { ...getLlmConfig(), ...config };
 
   if (!apiConfig.apiKey) {
-    throw new Error('请先在 API 设置中配置你的 API Key。推荐使用通义千问（qwen-turbo 有免费额度）');
+    throw new Error('请先在 API 设置中配置你的 API Key');
   }
 
+  switch (apiConfig.provider) {
+    case 'anthropic':
+      return callAnthropicApi(prompt, systemPrompt, apiConfig);
+    default:
+      return callOpenAiCompatibleApi(prompt, systemPrompt, apiConfig);
+  }
+}
+
+export async function callAiApiStream(
+  prompt: string,
+  onChunk: (chunk: string) => void,
+  systemPrompt?: string,
+  config?: Partial<ApiConfig>
+): Promise<void> {
+  const apiConfig = { ...getLlmConfig(), ...config };
+
+  if (!apiConfig.apiKey) {
+    throw new Error('请先在 API 设置中配置你的 API Key');
+  }
+
+  switch (apiConfig.provider) {
+    case 'anthropic':
+      return callAnthropicApiStream(prompt, onChunk, systemPrompt, apiConfig);
+    default:
+      return callOpenAiCompatibleApiStream(prompt, onChunk, systemPrompt, apiConfig);
+  }
+}
+
+async function callOpenAiCompatibleApi(
+  prompt: string,
+  systemPrompt: string | undefined,
+  config: ApiConfig
+): Promise<string> {
   const messages: Array<{ role: string; content: string }> = [];
   if (systemPrompt) {
     messages.push({ role: 'system', content: systemPrompt });
   }
   messages.push({ role: 'user', content: prompt });
 
-  const response = await fetch(`${apiConfig.baseUrl}/chat/completions`, {
+  const response = await fetch(`${config.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiConfig.apiKey}`,
+      'Authorization': `Bearer ${config.apiKey}`,
     },
     body: JSON.stringify({
-      model: apiConfig.model,
+      model: config.model,
       messages,
-      max_tokens: apiConfig.maxTokens,
-      temperature: apiConfig.temperature,
+      max_tokens: config.maxTokens,
+      temperature: config.temperature,
     }),
   });
 
@@ -69,36 +239,29 @@ export async function callAiApi(
   return data.choices?.[0]?.message?.content || '';
 }
 
-// 流式调用 AI API
-export async function callAiApiStream(
+async function callOpenAiCompatibleApiStream(
   prompt: string,
   onChunk: (chunk: string) => void,
-  systemPrompt?: string,
-  config?: Partial<ApiConfig>
+  systemPrompt: string | undefined,
+  config: ApiConfig
 ): Promise<void> {
-  const apiConfig = { ...getApiConfig(), ...config };
-
-  if (!apiConfig.apiKey) {
-    throw new Error('请先在 API 设置中配置你的 API Key。推荐使用通义千问（qwen-turbo 有免费额度）');
-  }
-
   const messages: Array<{ role: string; content: string }> = [];
   if (systemPrompt) {
     messages.push({ role: 'system', content: systemPrompt });
   }
   messages.push({ role: 'user', content: prompt });
 
-  const response = await fetch(`${apiConfig.baseUrl}/chat/completions`, {
+  const response = await fetch(`${config.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiConfig.apiKey}`,
+      'Authorization': `Bearer ${config.apiKey}`,
     },
     body: JSON.stringify({
-      model: apiConfig.model,
+      model: config.model,
       messages,
-      max_tokens: apiConfig.maxTokens,
-      temperature: apiConfig.temperature,
+      max_tokens: config.maxTokens,
+      temperature: config.temperature,
       stream: true,
     }),
   });
@@ -131,14 +294,292 @@ export async function callAiApiStream(
           const content = parsed.choices?.[0]?.delta?.content;
           if (content) onChunk(content);
         } catch {
-          // 忽略解析错误
         }
       }
     }
   }
 }
 
-// 模拟 API 调用（用于演示）
+async function callAnthropicApi(
+  prompt: string,
+  systemPrompt: string | undefined,
+  config: ApiConfig
+): Promise<string> {
+  const messages: Array<{ role: string; content: string }> = [
+    { role: 'user', content: prompt }
+  ];
+
+  const body: any = {
+    model: config.model,
+    messages,
+    max_tokens: config.maxTokens,
+    temperature: config.temperature,
+  };
+
+  if (systemPrompt) {
+    body.system = systemPrompt;
+  }
+
+  const response = await fetch(`${config.baseUrl}/messages`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': config.apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`API 请求失败 (${response.status}): ${error}`);
+  }
+
+  const data = await response.json();
+  return data.content?.[0]?.text || '';
+}
+
+async function callAnthropicApiStream(
+  prompt: string,
+  onChunk: (chunk: string) => void,
+  systemPrompt: string | undefined,
+  config: ApiConfig
+): Promise<void> {
+  const messages: Array<{ role: string; content: string }> = [
+    { role: 'user', content: prompt }
+  ];
+
+  const body: any = {
+    model: config.model,
+    messages,
+    max_tokens: config.maxTokens,
+    temperature: config.temperature,
+    stream: true,
+  };
+
+  if (systemPrompt) {
+    body.system = systemPrompt;
+  }
+
+  const response = await fetch(`${config.baseUrl}/messages`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': config.apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`API 请求失败 (${response.status}): ${error}`);
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error('无法读取响应流');
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        const data = line.slice(6);
+        if (data === '[DONE]') return;
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.type === 'content_block_delta') {
+            const content = parsed.delta?.text;
+            if (content) onChunk(content);
+          }
+        } catch {
+        }
+      }
+    }
+  }
+}
+
+// ==================== AI 检测 API ====================
+
+export async function callAiDetectionApi(content: string): Promise<AiDetectionResult> {
+  const config = getAiDetectionConfig();
+
+  if (config.provider === 'local') {
+    throw new Error('local provider should use local implementation');
+  }
+
+  switch (config.provider) {
+    case 'originality':
+      return callOriginalityAi(content, config);
+    case 'winston':
+      return callWinstonAi(content, config);
+    case 'copyscape':
+      return callCopyscape(content, config);
+    default:
+      throw new Error(`Unsupported AI detection provider: ${config.provider}`);
+  }
+}
+
+async function callOriginalityAi(content: string, config: AiDetectionConfig): Promise<AiDetectionResult> {
+  if (!config.apiKey) {
+    throw new Error('请配置 Originality.ai API Key');
+  }
+
+  const response = await fetch(`${config.baseUrl}/scan/ai`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-OAI-API-KEY': config.apiKey,
+    },
+    body: JSON.stringify({
+      content,
+      title: 'Content Analysis',
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Originality.ai API 请求失败: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const aiScore = Math.round((data.score?.ai || 0) * 100);
+
+  return {
+    overallScore: aiScore,
+    segments: [{
+      text: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
+      aiProbability: aiScore,
+      label: aiScore > 70 ? '高疑似AI' : aiScore > 40 ? '疑似AI' : '疑似人工',
+      confidence: Math.abs(aiScore - 50) * 2,
+    }],
+  };
+}
+
+async function callWinstonAi(content: string, config: AiDetectionConfig): Promise<AiDetectionResult> {
+  if (!config.apiKey) {
+    throw new Error('请配置 Winston AI API Key');
+  }
+
+  const response = await fetch(`${config.baseUrl}/v3/predict`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${config.apiKey}`,
+    },
+    body: JSON.stringify({
+      text: content,
+      language: 'zh',
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Winston AI API 请求失败: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const aiScore = Math.round(data.score * 100);
+
+  return {
+    overallScore: aiScore,
+    segments: [{
+      text: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
+      aiProbability: aiScore,
+      label: aiScore > 70 ? '高疑似AI' : aiScore > 40 ? '疑似AI' : '疑似人工',
+      confidence: Math.abs(aiScore - 50) * 2,
+    }],
+  };
+}
+
+async function callCopyscape(content: string, config: AiDetectionConfig): Promise<AiDetectionResult> {
+  throw new Error('Copyscape integration coming soon');
+}
+
+// ==================== 内容安全 API ====================
+
+export async function callContentSafetyApi(content: string): Promise<SensitiveCheckResult> {
+  const config = getContentSafetyConfig();
+
+  if (config.provider === 'local') {
+    throw new Error('local provider should use local implementation');
+  }
+
+  switch (config.provider) {
+    case 'aliyun':
+      return callAliyunContentSafety(content, config);
+    case 'tencent':
+      return callTencentContentSafety(content, config);
+    case 'baidu':
+      return callBaiduContentSafety(content, config);
+    default:
+      throw new Error(`Unsupported content safety provider: ${config.provider}`);
+  }
+}
+
+async function callAliyunContentSafety(content: string, config: ContentSafetyConfig): Promise<SensitiveCheckResult> {
+  if (!config.accessKeyId || !config.accessKeySecret) {
+    throw new Error('请配置阿里云 AccessKey ID 和 Secret');
+  }
+
+  const response = await fetch('https://green-cip.cn-shanghai.aliyuncs.com/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      Service: 'text_antispam',
+      ServiceParameters: JSON.stringify({ content }),
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`阿里云内容安全 API 请求失败: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const violations: any[] = [];
+
+  if (data.Data?.Results) {
+    for (const result of data.Data.Results) {
+      if (result.Label !== 'normal') {
+        violations.push({
+          type: 'violation',
+          text: `检测到 ${result.Label} 内容`,
+          triggerText: content.substring(0, 200),
+          severity: 'high' as const,
+          suggestion: `请删除或修改违规内容`,
+        });
+      }
+    }
+  }
+
+  const score = Math.max(100 - violations.length * 20, 10);
+
+  return {
+    score,
+    violations,
+    summary: violations.length === 0
+      ? '✅ 内容安全可发布'
+      : `⚠️ 检测到 ${violations.length} 处违规内容`,
+  };
+}
+
+async function callTencentContentSafety(content: string, config: ContentSafetyConfig): Promise<SensitiveCheckResult> {
+  throw new Error('腾讯云内容安全集成 coming soon');
+}
+
+async function callBaiduContentSafety(content: string, config: ContentSafetyConfig): Promise<SensitiveCheckResult> {
+  throw new Error('百度内容安全集成 coming soon');
+}
+
+// 模拟 API 调用
 export function simulateApiCall(delay: number = 2000): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, delay));
 }

@@ -12,6 +12,7 @@ import type {
 import { generateHomogeneityResult } from './homogeneity';
 import { HOT_ARTICLES, fetchHotArticles } from './hotArticles';
 import { generateArticle as generateArticleCore, generateArticleLocal, polishContentLocal } from './articleGenerator';
+import { callAiDetectionApi, callContentSafetyApi, getAiDetectionConfig, getContentSafetyConfig } from './api';
 
 // Re-exports
 export { fetchHotArticles, HOT_ARTICLES };
@@ -70,7 +71,17 @@ const MARKETING_PATTERNS = [
 ];
 
 // 分段检测 AI
-export function analyzeAiDetection(content: string): AiDetectionResult {
+export async function analyzeAiDetection(content: string): Promise<AiDetectionResult> {
+  const config = getAiDetectionConfig();
+
+  if (config.provider !== 'local') {
+    try {
+      return await callAiDetectionApi(content);
+    } catch (e) {
+      console.warn('AI 检测 API 调用失败，回退到本地检测:', e);
+    }
+  }
+
   const paragraphs = content.split(/\n+/).filter(p => p.trim().length > 0);
   const segments = paragraphs.map(para => {
     const score = calculateAiScore(para);
@@ -388,7 +399,17 @@ export function analyzeLogic(content: string): LogicCheckResult {
 }
 
 // 敏感与违规检测
-export function analyzeSensitive(content: string): SensitiveCheckResult {
+export async function analyzeSensitive(content: string): Promise<SensitiveCheckResult> {
+  const config = getContentSafetyConfig();
+
+  if (config.provider !== 'local') {
+    try {
+      return await callContentSafetyApi(content);
+    } catch (e) {
+      console.warn('内容安全 API 调用失败，回退到本地检测:', e);
+    }
+  }
+
   const violations: SensitiveCheckResult['violations'] = [];
   const paragraphs = content.split(/\n+/).filter(p => p.trim());
 
@@ -461,12 +482,12 @@ export function analyzeMarketing(content: string): MarketingCheckResult {
 }
 
 // 综合检测报告
-export function generateComprehensiveReport(content: string): ComprehensiveReport {
-  const ai = analyzeAiDetection(content);
+export async function generateComprehensiveReport(content: string): Promise<ComprehensiveReport> {
+  const ai = await analyzeAiDetection(content);
   const homogeneity = analyzeHomogeneity(content);
   const traffic = analyzeTraffic(content);
   const logic = analyzeLogic(content);
-  const sensitive = analyzeSensitive(content);
+  const sensitive = await analyzeSensitive(content);
   const marketing = analyzeMarketing(content);
 
   const overallScore = Math.round(

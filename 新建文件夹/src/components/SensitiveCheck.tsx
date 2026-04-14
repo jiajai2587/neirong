@@ -16,14 +16,17 @@ export function SensitiveCheck({ content }: SensitiveCheckProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [expandedViolations, setExpandedViolations] = useState<Set<number>>(new Set());
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!content.trim()) return;
     setIsAnalyzing(true);
-    setTimeout(() => {
-      const res = analyzeSensitive(content);
+    try {
+      const res = await analyzeSensitive(content);
       setResult(res);
+    } catch (error) {
+      console.error('敏感词检测失败:', error);
+    } finally {
       setIsAnalyzing(false);
-    }, 1500);
+    }
   };
 
   const toggleViolation = (index: number) => {

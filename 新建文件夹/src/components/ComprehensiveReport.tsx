@@ -17,14 +17,17 @@ export function ComprehensiveReportView({ content, title }: ComprehensiveReportV
   const [report, setReport] = useState<ComprehensiveReport | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!content.trim()) return;
     setIsAnalyzing(true);
-    setTimeout(() => {
-      const res = generateComprehensiveReport(content);
+    try {
+      const res = await generateComprehensiveReport(content);
       setReport(res);
+    } catch (error) {
+      console.error('生成综合报告失败:', error);
+    } finally {
       setIsAnalyzing(false);
-    }, 3000);
+    }
   };
 
   const getScoreColor = (score: number) => {
