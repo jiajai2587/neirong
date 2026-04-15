@@ -15,29 +15,35 @@ export function ManualView() {
       icon: <BookOpen className="w-5 h-5" />,
       content: (
         <div className="space-y-4">
-          <p className="text-sm leading-relaxed">
-            <strong>自媒体多工作平台</strong> 是一个集内容创作、质量检测、AI 分析于一体的综合性工具。
-            它帮助自媒体创作者在发布前对内容进行全面检测和优化，确保内容质量，提升流量表现。
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {[
-              { icon: <FileText className="w-4 h-4" />, label: '内容编辑' },
-              { icon: <Brain className="w-4 h-4" />, label: 'AI 检测' },
-              { icon: <Search className="w-4 h-4" />, label: '同质化查询' },
-              { icon: <TrendingUp className="w-4 h-4" />, label: '流量预测' },
-              { icon: <FileCheck className="w-4 h-4" />, label: '逻辑性检测' },
-              { icon: <AlertTriangle className="w-4 h-4" />, label: '敏感词检测' },
-              { icon: <Megaphone className="w-4 h-4" />, label: '营销文检测' },
-              { icon: <Sparkles className="w-4 h-4" />, label: 'AI 润色' },
-              { icon: <Rss className="w-4 h-4" />, label: '热门文章' },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-xs">
-                {item.icon}
-                <span>{item.label}</span>
-              </div>
-            ))}
+            <p className="text-sm leading-relaxed">
+              <strong>自媒体多工作平台</strong> 是一个集内容创作、质量检测、AI 分析于一体的综合性工具。
+              它帮助自媒体创作者在发布前对内容进行全面检测和优化，确保内容质量，提升流量表现。
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {[
+                { icon: <FileText className="w-4 h-4" />, label: '内容编辑' },
+                { icon: <Brain className="w-4 h-4" />, label: 'AI 检测' },
+                { icon: <Search className="w-4 h-4" />, label: '同质化查询' },
+                { icon: <TrendingUp className="w-4 h-4" />, label: '流量预测' },
+                { icon: <FileCheck className="w-4 h-4" />, label: '逻辑性检测' },
+                { icon: <AlertTriangle className="w-4 h-4" />, label: '敏感词检测' },
+                { icon: <Megaphone className="w-4 h-4" />, label: '营销文检测' },
+                { icon: <Sparkles className="w-4 h-4" />, label: 'AI 润色' },
+                { icon: <Rss className="w-4 h-4" />, label: '热门文章' },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-xs">
+                  {item.icon}
+                  <span>{item.label}</span>
+                </div>
+              ))}
+            </div>
+            <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+              <p className="text-sm flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                <Lightbulb className="w-4 h-4" />
+                <strong>提示</strong>：点击左侧菜单栏底部的 🌙/☀️ 图标可以切换暗色/明亮主题
+              </p>
+            </div>
           </div>
-        </div>
       ),
     },
     {
@@ -516,47 +522,61 @@ export function ManualView() {
       ),
     },
     {
-      id: 'step10',
-      title: '第十步：热门文章采集',
-      icon: <Rss className="w-5 h-5 text-orange-500" />,
-      content: (
-        <div className="space-y-4">
-          <p className="text-sm leading-relaxed">
-            <strong>目的</strong>：采集各平台热门文章，获取创作灵感。
+    id: 'step10',
+    title: '第十步：热门文章采集',
+    icon: <Rss className="w-5 h-5 text-orange-500" />,
+    content: (
+      <div className="space-y-4">
+        <p className="text-sm leading-relaxed">
+          <strong>目的</strong>：采集各平台热门文章，获取创作灵感。
+        </p>
+
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium flex items-center gap-2">
+            <Badge variant="outline" className="text-xs">1</Badge>
+            筛选和搜索
+          </h4>
+          <p className="text-sm text-muted-foreground ml-6">
+            你可以按平台筛选（今日头条、微信公众号、知乎等），
+            也可以搜索特定关键词或标签。
           </p>
 
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">1</Badge>
-              筛选和搜索
-            </h4>
-            <p className="text-sm text-muted-foreground ml-6">
-              你可以按平台筛选（今日头条、微信公众号、知乎等），
-              也可以搜索特定关键词或标签。
-            </p>
+          <h4 className="text-sm font-medium flex items-center gap-2">
+            <Badge variant="outline" className="text-xs">2</Badge>
+            排序方式
+          </h4>
+          <p className="text-sm text-muted-foreground ml-6">
+            支持按阅读量或发布时间排序，帮助你找到最热门或最新的内容。
+          </p>
 
-            <h4 className="text-sm font-medium flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">2</Badge>
-              排序方式
-            </h4>
-            <p className="text-sm text-muted-foreground ml-6">
-              支持按阅读量或发布时间排序，帮助你找到最热门或最新的内容。
-            </p>
+          <h4 className="text-sm font-medium flex items-center gap-2">
+            <Badge variant="outline" className="text-xs">3</Badge>
+            自定义 API 接口
+          </h4>
+          <p className="text-sm text-muted-foreground ml-6">
+            点击"配置接口"按钮，可以配置自定义数据源：
+          </p>
+          <ul className="list-disc list-inside space-y-1 ml-8 text-sm text-muted-foreground">
+            <li>启用自定义接口开关</li>
+            <li>填写 API 地址和可选的 API Key</li>
+            <li>API 应返回文章数组或包含 articles/data 字段</li>
+            <li>文章字段：title, source, platform, views, url, tags, publishDate</li>
+          </ul>
 
-            <h4 className="text-sm font-medium flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">3</Badge>
-              利用热门文章
-            </h4>
-            <ul className="list-disc list-inside space-y-1 ml-8 text-sm text-muted-foreground">
-              <li>学习爆款文章的标题写法</li>
-              <li>了解当前热门话题和趋势</li>
-              <li>分析高流量内容的共同特征</li>
-              <li>获取选题灵感和创作方向</li>
-            </ul>
-          </div>
+          <h4 className="text-sm font-medium flex items-center gap-2">
+            <Badge variant="outline" className="text-xs">4</Badge>
+            利用热门文章
+          </h4>
+          <ul className="list-disc list-inside space-y-1 ml-8 text-sm text-muted-foreground">
+            <li>学习爆款文章的标题写法</li>
+            <li>了解当前热门话题和趋势</li>
+            <li>分析高流量内容的共同特征</li>
+            <li>获取选题灵感和创作方向</li>
+          </ul>
         </div>
-      ),
-    },
+      </div>
+    ),
+  },
     {
       id: 'step11',
       title: '第十一步：API 接口设置',
@@ -575,14 +595,17 @@ export function ManualView() {
             <p className="text-sm text-muted-foreground ml-6">
               平台预设了多种主流 AI 服务商，点击即可自动填充配置：
             </p>
-            <div className="ml-6 grid grid-cols-2 gap-2">
-              {['OpenAI (GPT-4)', 'Claude', '智谱 AI', '通义千问', '文心一言', 'Moonshot (Kimi)', 'DeepSeek'].map((p, i) => (
+            <div className="ml-6 grid grid-cols-2 gap-2 mb-3">
+              {['OpenAI (GPT-4)', 'Claude', '智谱 AI', '通义千问', '文心一言', 'Moonshot (Kimi)', 'DeepSeek', '豆包'].map((p, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm">
                   <CheckCircle2 className="w-3 h-3 text-green-500" />
                   <span>{p}</span>
                 </div>
               ))}
             </div>
+            <p className="text-sm text-blue-600 dark:text-blue-400 ml-6">
+              💡 提示：按住 <strong>Ctrl/Command</strong> 键点击服务商按钮可直接跳转到对应官网获取 API Key
+            </p>
 
             <h4 className="text-sm font-medium flex items-center gap-2">
               <Badge variant="outline" className="text-xs">2</Badge>

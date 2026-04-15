@@ -37,17 +37,17 @@ export function ApiSettingsView() {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
-  const llmPresets: Array<{ name: string; config: ApiConfig }> = [
-    { name: '通义千问', config: DEFAULT_LLM_CONFIGS.dashscope },
-    { name: 'OpenAI', config: DEFAULT_LLM_CONFIGS.openai },
-    { name: 'Claude', config: DEFAULT_LLM_CONFIGS.anthropic },
-    { name: 'DeepSeek', config: DEFAULT_LLM_CONFIGS.deepseek },
-    { name: '豆包', config: DEFAULT_LLM_CONFIGS.doubao },
-    { name: '智谱', config: DEFAULT_LLM_CONFIGS.zhipu },
-    { name: '文心一言', config: DEFAULT_LLM_CONFIGS.wenxin },
-    { name: 'Moonshot', config: DEFAULT_LLM_CONFIGS.moonshot },
-    { name: 'Kimi', config: DEFAULT_LLM_CONFIGS.kimi },
-    { name: '自定义', config: DEFAULT_LLM_CONFIGS['openai-compatible'] },
+  const llmPresets: Array<{ name: string; config: ApiConfig; url: string }> = [
+    { name: '通义千问', config: DEFAULT_LLM_CONFIGS.dashscope, url: 'https://dashscope.console.aliyun.com/' },
+    { name: 'OpenAI', config: DEFAULT_LLM_CONFIGS.openai, url: 'https://platform.openai.com/' },
+    { name: 'Claude', config: DEFAULT_LLM_CONFIGS.anthropic, url: 'https://console.anthropic.com/' },
+    { name: 'DeepSeek', config: DEFAULT_LLM_CONFIGS.deepseek, url: 'https://platform.deepseek.com/' },
+    { name: '豆包', config: DEFAULT_LLM_CONFIGS.doubao, url: 'https://console.volcengine.com/ark/' },
+    { name: '智谱', config: DEFAULT_LLM_CONFIGS.zhipu, url: 'https://open.bigmodel.cn/' },
+    { name: '文心一言', config: DEFAULT_LLM_CONFIGS.wenxin, url: 'https://cloud.baidu.com/product/wenxinworkshop' },
+    { name: 'Moonshot', config: DEFAULT_LLM_CONFIGS.moonshot, url: 'https://platform.moonshot.cn/' },
+    { name: 'Kimi', config: DEFAULT_LLM_CONFIGS.kimi, url: 'https://platform.moonshot.cn/' },
+    { name: '自定义', config: DEFAULT_LLM_CONFIGS['openai-compatible'], url: '' },
   ];
 
   const aiDetectionPresets: Array<{ name: string; config: AiDetectionConfig }> = [
@@ -134,12 +134,18 @@ export function ApiSettingsView() {
               </div>
 
               <div>
-                <Label className="text-sm font-medium mb-2 block">快速选择服务商</Label>
+                <Label className="text-sm font-medium mb-2 block">快速选择服务商 (按住 Ctrl/Command 键点击跳转官网)</Label>
                 <div className="flex flex-wrap gap-2">
                   {llmPresets.map(preset => (
                     <button
                       key={preset.name}
-                      onClick={() => setLlmConfig(preset.config)}
+                      onClick={(e) => {
+                        if (e.ctrlKey || e.metaKey) {
+                          if (preset.url) window.open(preset.url, '_blank');
+                        } else {
+                          setLlmConfig(preset.config);
+                        }
+                      }}
                       className={cn(
                         'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
                         llmConfig.provider === preset.config.provider

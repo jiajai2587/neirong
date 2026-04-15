@@ -36,11 +36,19 @@ export interface ContentSafetyConfig {
   region?: string;
 }
 
+// 热门文章配置
+export interface HotArticlesConfig {
+  useCustom: boolean;
+  apiUrl: string;
+  apiKey?: string;
+}
+
 // 完整应用配置
 export interface AppConfig {
   llm: ApiConfig;
   aiDetection: AiDetectionConfig;
   contentSafety: ContentSafetyConfig;
+  hotArticles: HotArticlesConfig;
 }
 
 export interface AiDetectionResult {

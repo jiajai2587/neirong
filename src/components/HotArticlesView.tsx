@@ -3,10 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Rss, ExternalLink, Search, Eye, Calendar, Tag, Loader2, Copy, Check, RefreshCw } from 'lucide-react';
+import { Rss, ExternalLink, Search, Eye, Calendar, Tag, Loader2, Copy, Check, RefreshCw, Settings } from 'lucide-react';
 import type { HotArticle } from '@/lib/types';
-import { HOT_ARTICLES } from '@/lib/hotArticles';
+import { HOT_ARTICLES, fetchHotArticles } from '@/lib/hotArticles';
+import { getHotArticlesConfig, saveHotArticlesConfig } from '@/lib/api';
 
 // 模拟文章数据池（刷新时从中随机选取）
 const ARTICLE_POOL: HotArticle[] = [
@@ -111,43 +114,53 @@ export function HotArticlesView() {
   const [sortBy, setSortBy] = useState('views');
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [version, setVersion] = useState(0);
+  const [showSettings, setShowSettings] = useState(false);
+  const [hotArticlesConfig, setHotArticlesConfig] = useState(getHotArticlesConfig());
 
   // 从池中随机选取文章
-  const loadArticles = useCallback((platform?: string) => {
+  const loadArticles = useCallback(async (platform?: string) => {
     setIsLoading(true);
 
-    // 模拟网络延迟
-    setTimeout(() => {
-      let pool = [...ARTICLE_POOL];
+    try {
+      const config = getHotArticlesConfig();
+      if (config.useCustom && config.apiUrl) {
+        const result = await fetchHotArticles(platformFilter === 'all' ? undefined : platformFilter);
+        setArticles(result);
+      } else {
+        let pool = [...ARTICLE_POOL];
 
-      // 随机打乱顺序
-      for (let i = pool.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [pool[i], pool[j]] = [pool[j], pool[i]];
+        // 随机打乱顺序
+        for (let i = pool.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+
+        // 随机调整阅读量（模拟实时变化）
+        pool = pool.map(a => {
+          const num = parseFloat(a.views.replace(/[^0-9.]/g, ''));
+          const unit = a.views.includes('万') ? '万' : a.views.includes('千') ? '千' : '';
+          const variation = (Math.random() - 0.5) * 5;
+          const newNum = Math.max(1, num + variation);
+          return {
+            ...a,
+            views: unit ? `${newNum.toFixed(1)}${unit}` : `${Math.round(newNum)}`,
+          };
+        });
+
+        // 按平台筛选
+        if (platform && platform !== 'all') {
+          pool = pool.filter(a => a.platform.includes(platform));
+        }
+
+        // 取前8条
+        setArticles(pool.slice(0, 8));
       }
-
-      // 随机调整阅读量（模拟实时变化）
-      pool = pool.map(a => {
-        const num = parseFloat(a.views.replace(/[^0-9.]/g, ''));
-        const unit = a.views.includes('万') ? '万' : a.views.includes('千') ? '千' : '';
-        const variation = (Math.random() - 0.5) * 5; // ±2.5万变化
-        const newNum = Math.max(1, num + variation);
-        return {
-          ...a,
-          views: unit ? `${newNum.toFixed(1)}${unit}` : `${Math.round(newNum)}`,
-        };
-      });
-
-      // 按平台筛选
-      if (platform && platform !== 'all') {
-        pool = pool.filter(a => a.platform.includes(platform));
-      }
-
-      // 取前8条
-      setArticles(pool.slice(0, 8));
+    } catch (error) {
+      console.error('加载文章失败:', error);
+    } finally {
       setIsLoading(false);
-    }, 500);
-  }, []);
+    }
+  }, [platformFilter]);
 
   // 初始加载和平台切换时加载
   useEffect(() => {
@@ -163,6 +176,13 @@ export function HotArticlesView() {
     navigator.clipboard.writeText(title);
     setCopiedIndex(index);
     setTimeout(() => setCopiedIndex(null), 2000);
+  };
+
+  const handleSaveConfig = () => {
+    saveHotArticlesConfig(hotArticlesConfig);
+    setShowSettings(false);
+    setVersion(v => v + 1);
+    loadArticles(platformFilter === 'all' ? undefined : platformFilter);
   };
 
   const filteredArticles = articles
@@ -237,11 +257,67 @@ export function HotArticlesView() {
                 <SelectItem value="date">按发布时间</SelectItem>
               </SelectContent>
             </Select>
+            <Button onClick={() => setShowSettings(!showSettings)} variant="outline">
+              <Settings className="w-4 h-4 mr-2" />
+              配置接口
+            </Button>
             <Button onClick={handleRefresh} disabled={isLoading}>
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
               刷新
             </Button>
           </div>
+
+          {/* Custom API Settings */}
+          {showSettings && (
+            <Card className="mb-4">
+              <CardHeader>
+                <CardTitle className="text-base">热门文章接口配置</CardTitle>
+                <CardDescription>配置自定义 API 接口获取热门文章数据</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="use-custom">启用自定义接口</Label>
+                  <Switch
+                    id="use-custom"
+                    checked={hotArticlesConfig.useCustom}
+                    onCheckedChange={(checked) => setHotArticlesConfig(prev => ({ ...prev, useCustom: checked }))}
+                  />
+                </div>
+                {hotArticlesConfig.useCustom && (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="api-url">API 地址</Label>
+                      <Input
+                        id="api-url"
+                        placeholder="https://api.example.com/hot-articles"
+                        value={hotArticlesConfig.apiUrl}
+                        onChange={e => setHotArticlesConfig(prev => ({ ...prev, apiUrl: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="api-key">API Key（可选）</Label>
+                      <Input
+                        id="api-key"
+                        placeholder="sk-..."
+                        value={hotArticlesConfig.apiKey || ''}
+                        onChange={e => setHotArticlesConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                      />
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      <p>API 响应格式要求：</p>
+                      <ul className="list-disc list-inside mt-1">
+                        <li>直接返回文章数组，或包含 articles/data 字段</li>
+                        <li>文章字段：title, source, platform, views, url, tags, publishDate</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+                <Button onClick={handleSaveConfig} className="w-full">
+                  保存配置
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Articles List */}
           {isLoading ? (

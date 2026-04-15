@@ -5,6 +5,7 @@ import {
   Moon, Sun
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { applyTheme, getSelectedTheme } from '@/lib/themes';
 
 interface NavItem {
   id: string;
@@ -43,6 +44,10 @@ export function Sidebar({ activeTab, onTabChange, collapsed, onToggle }: Sidebar
     const checkDark = () => setIsDark(document.documentElement.classList.contains('dark'));
     checkDark();
 
+    // Apply saved theme on mount
+    const savedTheme = getSelectedTheme();
+    applyTheme(savedTheme);
+
     // Use MutationObserver to detect class changes
     const observer = new MutationObserver(checkDark);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
@@ -50,14 +55,9 @@ export function Sidebar({ activeTab, onTabChange, collapsed, onToggle }: Sidebar
   }, []);
 
   const toggleTheme = useCallback(() => {
-    const html = document.documentElement;
-    if (html.classList.contains('dark')) {
-      html.classList.remove('dark');
-    } else {
-      html.classList.add('dark');
-    }
-    // Force re-render
-    setIsDark(html.classList.contains('dark'));
+    const currentIsDark = document.documentElement.classList.contains('dark');
+    applyTheme(currentIsDark ? 'default' : 'dark');
+    setIsDark(!currentIsDark);
   }, []);
 
   return (

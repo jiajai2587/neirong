@@ -1,4 +1,5 @@
 import type { HotArticle } from '@/lib/types';
+import { getHotArticlesConfig } from './api';
 
 // 真实热门文章数据（使用真实可访问的链接）
 export const HOT_ARTICLES: HotArticle[] = [
@@ -77,7 +78,34 @@ export const HOT_ARTICLES: HotArticle[] = [
 ];
 
 export async function fetchHotArticles(platform?: string): Promise<HotArticle[]> {
-  // 模拟网络请求延迟
+  const config = getHotArticlesConfig();
+
+  if (config.useCustom && config.apiUrl) {
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (config.apiKey) {
+        headers['Authorization'] = `Bearer ${config.apiKey}`;
+      }
+
+      const url = platform ? `${config.apiUrl}?platform=${encodeURIComponent(platform)}` : config.apiUrl;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error(`API 请求失败: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.articles || data.data || data;
+    } catch (error) {
+      console.warn('自定义 API 调用失败，回退到本地数据:', error);
+    }
+  }
+
   await new Promise(resolve => setTimeout(resolve, 800));
 
   if (platform) {

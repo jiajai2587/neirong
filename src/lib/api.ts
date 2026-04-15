@@ -5,6 +5,7 @@ import type {
   AiDetectionProvider,
   ContentSafetyConfig,
   ContentSafetyProvider,
+  HotArticlesConfig,
   AppConfig,
   AiDetectionResult,
   SensitiveCheckResult,
@@ -160,10 +161,17 @@ export const DEFAULT_CONTENT_SAFETY_CONFIGS: Record<ContentSafetyProvider, Conte
   },
 };
 
+export const DEFAULT_HOT_ARTICLES_CONFIG: HotArticlesConfig = {
+  useCustom: false,
+  apiUrl: '',
+  apiKey: '',
+};
+
 export const DEFAULT_APP_CONFIG: AppConfig = {
   llm: DEFAULT_LLM_CONFIGS.dashscope,
   aiDetection: DEFAULT_AI_DETECTION_CONFIGS.local,
   contentSafety: DEFAULT_CONTENT_SAFETY_CONFIGS.local,
+  hotArticles: DEFAULT_HOT_ARTICLES_CONFIG,
 };
 
 // ==================== 配置存储 ====================
@@ -213,6 +221,15 @@ export function getContentSafetyConfig(): ContentSafetyConfig {
 export function saveContentSafetyConfig(config: Partial<ContentSafetyConfig>): void {
   const current = getAppConfig();
   saveAppConfig({ ...current, contentSafety: { ...current.contentSafety, ...config } });
+}
+
+export function getHotArticlesConfig(): HotArticlesConfig {
+  return getAppConfig().hotArticles;
+}
+
+export function saveHotArticlesConfig(config: Partial<HotArticlesConfig>): void {
+  const current = getAppConfig();
+  saveAppConfig({ ...current, hotArticles: { ...current.hotArticles, ...config } });
 }
 
 // 兼容旧版 API 配置
