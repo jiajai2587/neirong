@@ -6,10 +6,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Rss, ExternalLink, Search, Eye, Calendar, Tag, Loader2, Copy, Check, RefreshCw, Settings } from 'lucide-react';
+import { Rss, ExternalLink, Search, Eye, Calendar, Tag, Loader2, Copy, Check, RefreshCw, Settings, Globe } from 'lucide-react';
 import type { HotArticle } from '@/lib/types';
 import { HOT_ARTICLES, fetchHotArticles } from '@/lib/hotArticles';
 import { getHotArticlesConfig, saveHotArticlesConfig } from '@/lib/api';
+
+// 平台 API 文档链接
+const PLATFORM_API_URLS: Record<string, string> = {
+  '今日头条': 'https://open.toutiao.com/',
+  '微信公众号': 'https://developers.weixin.qq.com/doc/',
+  '知乎': 'https://www.zhihu.com/developer',
+  '小红书': 'https://open.xiaohongshu.com/',
+  '抖音': 'https://developer.open-douyin.com/',
+  '百家号': 'https://baijiahao.baidu.com/builder/help',
+};
 
 // 模拟文章数据池（刷新时从中随机选取）
 const ARTICLE_POOL: HotArticle[] = [
@@ -366,7 +376,22 @@ export function HotArticlesView() {
                             <Calendar className="w-3 h-3" />
                             {article.publishDate}
                           </span>
-                          <Badge variant="outline" className="text-xs">{article.platform}</Badge>
+                          {PLATFORM_API_URLS[article.platform] ? (
+                            <a 
+                              href={PLATFORM_API_URLS[article.platform]} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 hover:text-primary transition-colors"
+                              title={`前往${article.platform}API文档`}
+                            >
+                              <Badge variant="outline" className="text-xs">
+                                <Globe className="w-2.5 h-2.5 mr-1" />
+                                {article.platform}
+                              </Badge>
+                            </a>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">{article.platform}</Badge>
+                          )}
                           <span>{article.source}</span>
                         </div>
                         <div className="flex flex-wrap gap-1.5 mt-2">
