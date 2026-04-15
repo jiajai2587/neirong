@@ -50,22 +50,22 @@ export function ApiSettingsView() {
     { name: '自定义', config: DEFAULT_LLM_CONFIGS['openai-compatible'], url: '' },
   ];
 
-  const aiDetectionPresets: Array<{ name: string; config: AiDetectionConfig }> = [
-    { name: '本地检测', config: DEFAULT_AI_DETECTION_CONFIGS.local },
-    { name: 'Originality.ai', config: DEFAULT_AI_DETECTION_CONFIGS.originality },
-    { name: 'Winston AI', config: DEFAULT_AI_DETECTION_CONFIGS.winston },
-    { name: 'Copyscape', config: DEFAULT_AI_DETECTION_CONFIGS.copyscape },
-    { name: 'GPTZero', config: DEFAULT_AI_DETECTION_CONFIGS.gptzero },
-    { name: 'Content at Scale', config: DEFAULT_AI_DETECTION_CONFIGS.contentatscale },
-    { name: 'Scribbr', config: DEFAULT_AI_DETECTION_CONFIGS.scribbr },
-    { name: 'ZeroGPT', config: DEFAULT_AI_DETECTION_CONFIGS.zerogpt },
+  const aiDetectionPresets: Array<{ name: string; config: AiDetectionConfig; url: string }> = [
+    { name: '本地检测', config: DEFAULT_AI_DETECTION_CONFIGS.local, url: '' },
+    { name: 'Originality.ai', config: DEFAULT_AI_DETECTION_CONFIGS.originality, url: 'https://originality.ai/' },
+    { name: 'Winston AI', config: DEFAULT_AI_DETECTION_CONFIGS.winston, url: 'https://gowinston.ai/' },
+    { name: 'Copyscape', config: DEFAULT_AI_DETECTION_CONFIGS.copyscape, url: 'https://www.copyscape.com/' },
+    { name: 'GPTZero', config: DEFAULT_AI_DETECTION_CONFIGS.gptzero, url: 'https://gptzero.me/' },
+    { name: 'Content at Scale', config: DEFAULT_AI_DETECTION_CONFIGS.contentatscale, url: 'https://contentatscale.ai/' },
+    { name: 'Scribbr', config: DEFAULT_AI_DETECTION_CONFIGS.scribbr, url: 'https://www.scribbr.com/' },
+    { name: 'ZeroGPT', config: DEFAULT_AI_DETECTION_CONFIGS.zerogpt, url: 'https://zerogpt.com/' },
   ];
 
-  const contentSafetyPresets: Array<{ name: string; config: ContentSafetyConfig }> = [
-    { name: '本地检测', config: DEFAULT_CONTENT_SAFETY_CONFIGS.local },
-    { name: '阿里云内容安全', config: DEFAULT_CONTENT_SAFETY_CONFIGS.aliyun },
-    { name: '腾讯云内容安全', config: DEFAULT_CONTENT_SAFETY_CONFIGS.tencent },
-    { name: '百度内容安全', config: DEFAULT_CONTENT_SAFETY_CONFIGS.baidu },
+  const contentSafetyPresets: Array<{ name: string; config: ContentSafetyConfig; url: string }> = [
+    { name: '本地检测', config: DEFAULT_CONTENT_SAFETY_CONFIGS.local, url: '' },
+    { name: '阿里云内容安全', config: DEFAULT_CONTENT_SAFETY_CONFIGS.aliyun, url: 'https://www.aliyun.com/product/lvs' },
+    { name: '腾讯云内容安全', config: DEFAULT_CONTENT_SAFETY_CONFIGS.tencent, url: 'https://cloud.tencent.com/product/ims' },
+    { name: '百度内容安全', config: DEFAULT_CONTENT_SAFETY_CONFIGS.baidu, url: 'https://ai.baidu.com/tech/textcensoring' },
   ];
 
   const handleSave = useCallback(() => {
@@ -280,12 +280,18 @@ export function ApiSettingsView() {
               </div>
 
               <div>
-                <Label className="text-sm font-medium mb-2 block">选择检测服务</Label>
+                <Label className="text-sm font-medium mb-2 block">选择检测服务 (按住 Ctrl/Command 键点击跳转官网)</Label>
                 <div className="flex flex-wrap gap-2">
                   {aiDetectionPresets.map(preset => (
                     <button
                       key={preset.name}
-                      onClick={() => setAiDetectionConfig(preset.config)}
+                      onClick={(e) => {
+                        if (e.ctrlKey || e.metaKey) {
+                          if (preset.url) window.open(preset.url, '_blank');
+                        } else {
+                          setAiDetectionConfig(preset.config);
+                        }
+                      }}
                       className={cn(
                         'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
                         aiDetectionConfig.provider === preset.config.provider
@@ -343,12 +349,18 @@ export function ApiSettingsView() {
               </div>
 
               <div>
-                <Label className="text-sm font-medium mb-2 block">选择内容安全服务</Label>
+                <Label className="text-sm font-medium mb-2 block">选择内容安全服务 (按住 Ctrl/Command 键点击跳转官网)</Label>
                 <div className="flex flex-wrap gap-2">
                   {contentSafetyPresets.map(preset => (
                     <button
                       key={preset.name}
-                      onClick={() => setContentSafetyConfig(preset.config)}
+                      onClick={(e) => {
+                        if (e.ctrlKey || e.metaKey) {
+                          if (preset.url) window.open(preset.url, '_blank');
+                        } else {
+                          setContentSafetyConfig(preset.config);
+                        }
+                      }}
                       className={cn(
                         'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
                         contentSafetyConfig.provider === preset.config.provider
