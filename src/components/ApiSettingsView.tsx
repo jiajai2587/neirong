@@ -140,8 +140,10 @@ export function ApiSettingsView() {
                     <button
                       key={preset.name}
                       onClick={(e) => {
-                        if (e.ctrlKey || e.metaKey) {
-                          if (preset.url) window.open(preset.url, '_blank');
+                        if (e.ctrlKey || e.metaKey || e.button === 1) {
+                          if (preset.url) {
+                            window.open(preset.url, '_blank');
+                          }
                         } else {
                           setLlmConfig(preset.config);
                         }
@@ -355,8 +357,10 @@ export function ApiSettingsView() {
                     <button
                       key={preset.name}
                       onClick={(e) => {
-                        if (e.ctrlKey || e.metaKey) {
-                          if (preset.url) window.open(preset.url, '_blank');
+                        if (e.ctrlKey || e.metaKey || e.button === 1) {
+                          if (preset.url) {
+                            window.open(preset.url, '_blank');
+                          }
                         } else {
                           setContentSafetyConfig(preset.config);
                         }
