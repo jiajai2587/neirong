@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { Toaster } from '@/components/ui/toaster';
 import { Sidebar } from '@/components/Sidebar';
 import { ContentEditor } from '@/components/ContentEditor';
@@ -116,6 +117,7 @@ function App() {
       </main>
 
       <Toaster />
+      <Analytics />
     </div>
   );
 }
