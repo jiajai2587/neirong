@@ -37,6 +37,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'contact', label: '联系方式', icon: <MessageCircle className="w-4 h-4" /> },
 ];
 
+
 export function Sidebar({ activeTab, onTabChange, collapsed, onToggle }: SidebarProps) {
   const [isDark, setIsDark] = useState(false);
 
@@ -81,7 +82,7 @@ export function Sidebar({ activeTab, onTabChange, collapsed, onToggle }: Sidebar
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
-        {NAV_ITEMS.map(item => (
+        {NAV_ITEMS.filter(item => item.id !== 'contact').map(item => (
           <button
             key={item.id}
             onClick={() => onTabChange(item.id)}
@@ -98,6 +99,23 @@ export function Sidebar({ activeTab, onTabChange, collapsed, onToggle }: Sidebar
           </button>
         ))}
       </nav>
+
+      {/* Contact Info */}
+      <div className="p-2 border-t border-border">
+        <button
+          onClick={() => onTabChange('contact')}
+          className={cn(
+            'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200',
+            activeTab === 'contact'
+              ? 'bg-primary/10 text-primary font-medium'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+          )}
+          title={collapsed ? '联系方式' : undefined}
+        >
+          <span className="flex-shrink-0"><MessageCircle className="w-4 h-4" /></span>
+          {!collapsed && <span className="truncate">联系方式</span>}
+        </button>
+      </div>
 
       {/* Bottom controls */}
       <div className="p-2 border-t border-border space-y-1">

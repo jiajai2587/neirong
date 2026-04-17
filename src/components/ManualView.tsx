@@ -5,7 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import {
   BookOpen, FileText, Brain, Search, TrendingUp, FileCheck,
   AlertTriangle, Megaphone, Sparkles, Rss, Settings, ChevronRight,
-  Lightbulb, CheckCircle2, ArrowRight, Mail, MessageCircle
+  Lightbulb, CheckCircle2, ArrowRight, Mail, MessageCircle, Check
 } from 'lucide-react';
 
 export function ManualView() {
