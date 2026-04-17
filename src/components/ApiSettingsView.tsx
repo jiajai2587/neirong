@@ -36,9 +36,6 @@ export function ApiSettingsView() {
   const [saved, setSaved] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [contactWechat, setContactWechat] = useState<string>(() => {
-    return localStorage.getItem('contactWechat') || 'xiaoqi19860607';
-  });
 
   const llmPresets: Array<{ name: string; config: ApiConfig; url: string }> = [
     { name: '通义千问', config: DEFAULT_LLM_CONFIGS.dashscope, url: 'https://dashscope.console.aliyun.com/' },
@@ -94,12 +91,6 @@ export function ApiSettingsView() {
     }
     setTesting(false);
   }, [llmConfig]);
-
-  const handleSaveContact = useCallback(() => {
-    localStorage.setItem('contactWechat', contactWechat);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  }, [contactWechat]);
 
   return (
     <div className="space-y-4">
@@ -499,41 +490,21 @@ export function ApiSettingsView() {
           <CardDescription>如有问题或建议，欢迎联系</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">微信联系方式</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  value={contactWechat}
-                  onChange={e => setContactWechat(e.target.value)}
-                  placeholder="请输入微信联系方式"
-                  className="flex-1"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSaveContact}
-                >
-                  保存
-                </Button>
-              </div>
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+            <MessageCircle className="w-5 h-5 text-green-500" />
+            <div>
+              <p className="text-sm font-medium">微信</p>
+              <p className="text-sm text-muted-foreground">xiaoqi19860607</p>
             </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
-              <MessageCircle className="w-5 h-5 text-green-500" />
-              <div>
-                <p className="text-sm font-medium">微信</p>
-                <p className="text-sm text-muted-foreground">{contactWechat}</p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="ml-auto"
-                onClick={() => navigator.clipboard.writeText(contactWechat)}
-              >
-                <Check className="w-3 h-3 mr-1" />
-                复制
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="ml-auto"
+              onClick={() => navigator.clipboard.writeText('xiaoqi19860607')}
+            >
+              <Check className="w-3 h-3 mr-1" />
+              复制
+            </Button>
           </div>
         </CardContent>
       </Card>
