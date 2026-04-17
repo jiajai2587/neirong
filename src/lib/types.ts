@@ -9,6 +9,20 @@ export type AiDetectionProvider = 'originality' | 'winston' | 'copyscape' | 'loc
 // 内容安全服务提供商类型
 export type ContentSafetyProvider = 'aliyun' | 'tencent' | 'baidu' | 'local';
 
+// 图片生成服务提供商类型
+export type ImageGenerationProvider = 'openai' | 'dashscope' | 'stability' | 'midjourney' | 'custom';
+
+// 图片生成配置
+export interface ImageGenerationConfig {
+  provider: ImageGenerationProvider;
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+  size: string;
+  quality: string;
+  style: string;
+}
+
 export interface ApiConfig {
   provider: LlmProvider;
   baseUrl: string;
@@ -49,6 +63,7 @@ export interface AppConfig {
   aiDetection: AiDetectionConfig;
   contentSafety: ContentSafetyConfig;
   hotArticles: HotArticlesConfig;
+  imageGeneration: ImageGenerationConfig;
 }
 
 export interface AiDetectionResult {
