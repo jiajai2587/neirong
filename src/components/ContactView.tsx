@@ -1,8 +1,32 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, Mail, Lightbulb } from 'lucide-react';
+import { MessageCircle, Mail, Lightbulb, Check } from 'lucide-react';
+import { useState } from 'react';
 
 export function ContactView() {
+  const [copiedWechat, setCopiedWechat] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
+
+  const handleCopyWechat = async () => {
+    try {
+      await navigator.clipboard.writeText('xiaoqi19860607');
+      setCopiedWechat(true);
+      setTimeout(() => setCopiedWechat(false), 2000);
+    } catch (err) {
+      console.error('复制失败:', err);
+    }
+  };
+
+  const handleCopyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText('2742938881@qq.com');
+      setCopiedEmail(true);
+      setTimeout(() => setCopiedEmail(false), 2000);
+    } catch (err) {
+      console.error('复制失败:', err);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -31,9 +55,16 @@ export function ContactView() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigator.clipboard.writeText('xiaoqi19860607')}
+                  onClick={handleCopyWechat}
                 >
-                  复制
+                  {copiedWechat ? (
+                    <>
+                      <Check className="w-3 h-3 mr-1" />
+                      已复制
+                    </>
+                  ) : (
+                    '复制'
+                  )}
                 </Button>
               </div>
               <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
@@ -47,9 +78,16 @@ export function ContactView() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigator.clipboard.writeText('2742938881@qq.com')}
+                  onClick={handleCopyEmail}
                 >
-                  复制
+                  {copiedEmail ? (
+                    <>
+                      <Check className="w-3 h-3 mr-1" />
+                      已复制
+                    </>
+                  ) : (
+                    '复制'
+                  )}
                 </Button>
               </div>
             </div>
