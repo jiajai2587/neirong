@@ -7,9 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Sparkles, Copy, Check, FileText, Loader2, Wand2, RefreshCw, AlertCircle } from 'lucide-react';
+import { Sparkles, Copy, Check, FileText, Loader2, Wand2, RefreshCw, AlertCircle, Image, Download } from 'lucide-react';
 import { generateArticle } from '@/lib/analysis';
-import { getApiConfig } from '@/lib/api';
+import { getApiConfig, getImageGenerationConfig, callImageGenerationApi } from '@/lib/api';
 
 interface GenerateArticleProps {
   onContentGenerated: (content: string) => void;
@@ -28,6 +28,14 @@ export function GenerateArticleView({ onContentGenerated }: GenerateArticleProps
     const config = getApiConfig();
     return !!config.apiKey;
   });
+  const [hasImageApiKey, setHasImageApiKey] = useState(() => {
+    const config = getImageGenerationConfig();
+    return !!config.apiKey;
+  });
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [generatedImage, setGeneratedImage] = useState('');
+  const [imagePrompt, setImagePrompt] = useState('');
+  const [imageSize, setImageSize] = useState('1024x1024');
 
   const handleGenerate = async () => {
     if (!topic.trim()) return;
@@ -42,14 +50,47 @@ export function GenerateArticleView({ onContentGenerated }: GenerateArticleProps
 
       if (result) {
         setGeneratedContent(result);
+        // 自动生成图片提示词
+        const autoPrompt = `为文章"${topic}"生成一张适合${platform}平台的配图，风格为${style}，图片需要与文章内容相关，吸引人且专业。`;
+        setImagePrompt(autoPrompt);
       }
     } catch {
       // Fallback
       const result = await generateArticle(topic, platform, style, wordCount);
       setGeneratedContent(result);
+      // 自动生成图片提示词
+      const autoPrompt = `为文章"${topic}"生成一张适合${platform}平台的配图，风格为${style}，图片需要与文章内容相关，吸引人且专业。`;
+      setImagePrompt(autoPrompt);
     }
 
     setIsGenerating(false);
+  };
+
+  const handleGenerateImage = async () => {
+    if (!imagePrompt.trim()) return;
+    setIsGeneratingImage(true);
+    setGeneratedImage('');
+
+    try {
+      const imageUrl = await callImageGenerationApi(imagePrompt, {
+        size: imageSize
+      });
+      setGeneratedImage(imageUrl);
+    } catch (error: any) {
+      console.error('图片生成失败:', error);
+      alert('图片生成失败: ' + (error.message || '未知错误'));
+    }
+
+    setIsGeneratingImage(false);
+  };
+
+  const handleDownloadImage = () => {
+    if (generatedImage) {
+      const link = document.createElement('a');
+      link.href = generatedImage;
+      link.download = `article-image-${Date.now()}.jpg`;
+      link.click();
+    }
   };
 
   const handleCopy = () => {
@@ -260,8 +301,99 @@ export function GenerateArticleView({ onContentGenerated }: GenerateArticleProps
               <Textarea
                 value={generatedContent}
                 readOnly
-                className="min-h-[400px] text-sm leading-relaxed font-mono"
+                className="min-h-[400px] text-sm leading-relaxed font-mono mb-4"
               />
+
+              {/* 图片生成 */}
+              <div className="mt-6 border-t pt-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Image className="w-4 h-4 text-violet-500" />
+                  <h3 className="text-base font-medium">AI 生成配图</h3>
+                </div>
+                
+                {!hasImageApiKey && (
+                  <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-amber-600 dark:text-amber-400">
+                      <p className="font-medium">未配置图片生成 API Key</p>
+                      <p className="text-xs mt-1 text-amber-500/80">
+                        请在"API 接口设置"中配置图片生成 API Key，推荐使用 OpenAI DALL-E 3 或通义千问。
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">图片提示词</Label>
+                    <Textarea
+                      value={imagePrompt}
+                      onChange={e => setImagePrompt(e.target.value)}
+                      placeholder="描述你想要的图片内容，例如：为文章'AI写作技巧'生成一张适合微信公众号的配图，风格为干货教程，图片需要与文章内容相关，吸引人且专业。"
+                      className="min-h-[100px]"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">图片尺寸</Label>
+                      <Select value={imageSize} onValueChange={setImageSize}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="512x512">512x512</SelectItem>
+                          <SelectItem value="1024x1024">1024x1024</SelectItem>
+                          <SelectItem value="1024x1792">1024x1792</SelectItem>
+                          <SelectItem value="1792x1024">1792x1024</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex items-end">
+                      <Button 
+                        onClick={handleGenerateImage} 
+                        disabled={!imagePrompt.trim() || !hasImageApiKey || isGeneratingImage}
+                        className="w-full"
+                      >
+                        {isGeneratingImage ? (
+                          <span className="flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            生成图片中...
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-2">
+                            <Image className="w-4 h-4" />
+                            生成图片
+                          </span>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {generatedImage && (
+                    <div className="mt-4 border border-border rounded-lg p-4">
+                      <h4 className="text-sm font-medium mb-3">生成结果</h4>
+                      <div className="flex flex-col items-center">
+                        <img 
+                          src={generatedImage} 
+                          alt="Generated image" 
+                          className="max-w-full max-h-[400px] rounded-lg object-contain"
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={handleDownloadImage}
+                          className="mt-4 flex items-center gap-2"
+                        >
+                          <Download className="w-4 h-4" />
+                          下载图片
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

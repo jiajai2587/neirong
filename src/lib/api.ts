@@ -9,6 +9,8 @@ import type {
   AppConfig,
   AiDetectionResult,
   SensitiveCheckResult,
+  ImageGenerationConfig,
+  ImageGenerationProvider,
 } from './types';
 
 // ==================== 默认配置 ====================
@@ -161,6 +163,54 @@ export const DEFAULT_CONTENT_SAFETY_CONFIGS: Record<ContentSafetyProvider, Conte
   },
 };
 
+export const DEFAULT_IMAGE_GENERATION_CONFIGS: Record<ImageGenerationProvider, ImageGenerationConfig> = {
+  openai: {
+    provider: 'openai',
+    baseUrl: 'https://api.openai.com/v1',
+    apiKey: '',
+    model: 'dall-e-3',
+    size: '1024x1024',
+    quality: 'standard',
+    style: 'vivid',
+  },
+  dashscope: {
+    provider: 'dashscope',
+    baseUrl: 'https://dashscope.aliyuncs.com/api/v1',
+    apiKey: '',
+    model: 'qwen-vl-plus',
+    size: '1024x1024',
+    quality: 'standard',
+    style: 'vivid',
+  },
+  stability: {
+    provider: 'stability',
+    baseUrl: 'https://api.stability.ai/v1',
+    apiKey: '',
+    model: 'stable-diffusion-xl-1024-v1-0',
+    size: '1024x1024',
+    quality: 'standard',
+    style: 'vivid',
+  },
+  midjourney: {
+    provider: 'midjourney',
+    baseUrl: 'https://api.midjourney.com/v1',
+    apiKey: '',
+    model: 'midjourney-v6',
+    size: '1024x1024',
+    quality: 'standard',
+    style: 'vivid',
+  },
+  custom: {
+    provider: 'custom',
+    baseUrl: 'https://api.example.com/v1',
+    apiKey: '',
+    model: 'custom-model',
+    size: '1024x1024',
+    quality: 'standard',
+    style: 'vivid',
+  },
+};
+
 export const DEFAULT_HOT_ARTICLES_CONFIG: HotArticlesConfig = {
   useCustom: false,
   apiUrl: '',
@@ -172,6 +222,7 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
   aiDetection: DEFAULT_AI_DETECTION_CONFIGS.local,
   contentSafety: DEFAULT_CONTENT_SAFETY_CONFIGS.local,
   hotArticles: DEFAULT_HOT_ARTICLES_CONFIG,
+  imageGeneration: DEFAULT_IMAGE_GENERATION_CONFIGS.openai,
 };
 
 // ==================== 配置存储 ====================
@@ -230,6 +281,15 @@ export function getHotArticlesConfig(): HotArticlesConfig {
 export function saveHotArticlesConfig(config: Partial<HotArticlesConfig>): void {
   const current = getAppConfig();
   saveAppConfig({ ...current, hotArticles: { ...current.hotArticles, ...config } });
+}
+
+export function getImageGenerationConfig(): ImageGenerationConfig {
+  return getAppConfig().imageGeneration;
+}
+
+export function saveImageGenerationConfig(config: Partial<ImageGenerationConfig>): void {
+  const current = getAppConfig();
+  saveAppConfig({ ...current, imageGeneration: { ...current.imageGeneration, ...config } });
 }
 
 // 兼容旧版 API 配置
@@ -768,6 +828,104 @@ async function callTencentContentSafety(content: string, config: ContentSafetyCo
 
 async function callBaiduContentSafety(content: string, config: ContentSafetyConfig): Promise<SensitiveCheckResult> {
   throw new Error('百度内容安全集成 coming soon');
+}
+
+// ==================== 图片生成 API ====================
+
+export async function callImageGenerationApi(prompt: string, config?: Partial<ImageGenerationConfig>): Promise<string> {
+  const imageConfig = { ...getImageGenerationConfig(), ...config };
+
+  if (!imageConfig.apiKey) {
+    throw new Error('请先在 API 设置中配置你的图片生成 API Key');
+  }
+
+  switch (imageConfig.provider) {
+    case 'openai':
+      return callOpenAiImageApi(prompt, imageConfig);
+    case 'dashscope':
+      return callDashscopeImageApi(prompt, imageConfig);
+    case 'stability':
+      return callStabilityImageApi(prompt, imageConfig);
+    default:
+      throw new Error(`不支持的图片生成提供商: ${imageConfig.provider}`);
+  }
+}
+
+async function callOpenAiImageApi(prompt: string, config: ImageGenerationConfig): Promise<string> {
+  const response = await fetch(`${config.baseUrl}/images/generations`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${config.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: config.model,
+      prompt,
+      size: config.size,
+      quality: config.quality,
+      style: config.style,
+      n: 1,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`OpenAI 图片生成 API 请求失败 (${response.status}): ${error}`);
+  }
+
+  const data = await response.json();
+  return data.data?.[0]?.url || '';
+}
+
+async function callDashscopeImageApi(prompt: string, config: ImageGenerationConfig): Promise<string> {
+  const response = await fetch(`${config.baseUrl}/images/generations`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${config.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: config.model,
+      prompt,
+      size: config.size,
+      quality: config.quality,
+      style: config.style,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`通义千问 图片生成 API 请求失败 (${response.status}): ${error}`);
+  }
+
+  const data = await response.json();
+  return data.data?.[0]?.url || '';
+}
+
+async function callStabilityImageApi(prompt: string, config: ImageGenerationConfig): Promise<string> {
+  const response = await fetch(`${config.baseUrl}/generation/${config.model}/text-to-image`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${config.apiKey}`,
+    },
+    body: JSON.stringify({
+      text_prompts: [{ text: prompt }],
+      width: parseInt(config.size.split('x')[0]),
+      height: parseInt(config.size.split('x')[1]),
+      steps: 50,
+      cfg_scale: 7.0,
+      samples: 1,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Stability AI 图片生成 API 请求失败 (${response.status}): ${error}`);
+  }
+
+  const data = await response.json();
+  return data.artifacts?.[0]?.url || '';
 }
 
 // 模拟 API 调用

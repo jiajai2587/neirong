@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Settings, Key, Globe, Save, Check, AlertTriangle, TestTube, Eye, EyeOff, MessageCircle, Bot, Shield, ScanFace } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ApiConfig, AiDetectionConfig, ContentSafetyConfig, LlmProvider, AiDetectionProvider, ContentSafetyProvider } from '@/lib/types';
+import type { ApiConfig, AiDetectionConfig, ContentSafetyConfig, LlmProvider, AiDetectionProvider, ContentSafetyProvider, ImageGenerationConfig, ImageGenerationProvider } from '@/lib/types';
 import {
   getAppConfig,
   saveAppConfig,
@@ -19,10 +19,13 @@ import {
   saveAiDetectionConfig,
   getContentSafetyConfig,
   saveContentSafetyConfig,
+  getImageGenerationConfig,
+  saveImageGenerationConfig,
   callAiApi,
   DEFAULT_LLM_CONFIGS,
   DEFAULT_AI_DETECTION_CONFIGS,
   DEFAULT_CONTENT_SAFETY_CONFIGS,
+  DEFAULT_IMAGE_GENERATION_CONFIGS,
 } from '@/lib/api';
 
 export function ApiSettingsView() {
@@ -30,9 +33,11 @@ export function ApiSettingsView() {
   const [llmConfig, setLlmConfig] = useState<ApiConfig>(getLlmConfig());
   const [aiDetectionConfig, setAiDetectionConfig] = useState<AiDetectionConfig>(getAiDetectionConfig());
   const [contentSafetyConfig, setContentSafetyConfig] = useState<ContentSafetyConfig>(getContentSafetyConfig());
+  const [imageGenerationConfig, setImageGenerationConfig] = useState<ImageGenerationConfig>(getImageGenerationConfig());
   const [showLlmKey, setShowLlmKey] = useState(false);
   const [showAiDetectionKey, setShowAiDetectionKey] = useState(false);
   const [showContentSafetyKey, setShowContentSafetyKey] = useState(false);
+  const [showImageGenerationKey, setShowImageGenerationKey] = useState(false);
   const [saved, setSaved] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -68,13 +73,22 @@ export function ApiSettingsView() {
     { name: '百度内容安全', config: DEFAULT_CONTENT_SAFETY_CONFIGS.baidu, url: 'https://ai.baidu.com/tech/textcensoring' },
   ];
 
+  const imageGenerationPresets: Array<{ name: string; config: ImageGenerationConfig; url: string }> = [
+    { name: 'OpenAI (DALL-E 3)', config: DEFAULT_IMAGE_GENERATION_CONFIGS.openai, url: 'https://platform.openai.com/' },
+    { name: '通义千问', config: DEFAULT_IMAGE_GENERATION_CONFIGS.dashscope, url: 'https://dashscope.console.aliyun.com/' },
+    { name: 'Stability AI', config: DEFAULT_IMAGE_GENERATION_CONFIGS.stability, url: 'https://platform.stability.ai/' },
+    { name: 'Midjourney', config: DEFAULT_IMAGE_GENERATION_CONFIGS.midjourney, url: 'https://www.midjourney.com/' },
+    { name: '自定义', config: DEFAULT_IMAGE_GENERATION_CONFIGS.custom, url: '' },
+  ];
+
   const handleSave = useCallback(() => {
     saveLlmConfig(llmConfig);
     saveAiDetectionConfig(aiDetectionConfig);
     saveContentSafetyConfig(contentSafetyConfig);
+    saveImageGenerationConfig(imageGenerationConfig);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
-  }, [llmConfig, aiDetectionConfig, contentSafetyConfig]);
+  }, [llmConfig, aiDetectionConfig, contentSafetyConfig, imageGenerationConfig]);
 
   const handleTestLlm = useCallback(async () => {
     if (!llmConfig.apiKey) {
@@ -108,7 +122,7 @@ export function ApiSettingsView() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="llm" className="flex items-center gap-2">
                 <Bot className="w-4 h-4" />
                 大模型
@@ -120,6 +134,10 @@ export function ApiSettingsView() {
               <TabsTrigger value="content-safety" className="flex items-center gap-2">
                 <Shield className="w-4 h-4" />
                 内容安全
+              </TabsTrigger>
+              <TabsTrigger value="image-generation" className="flex items-center gap-2">
+                <MessageCircle className="w-4 h-4" />
+                图片生成
               </TabsTrigger>
             </TabsList>
 
@@ -453,6 +471,158 @@ export function ApiSettingsView() {
                   )}
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="image-generation" className="space-y-4 mt-4">
+              <div className="space-y-3 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">🖼️ 图片生成配置</p>
+                <p>配置用于生成文章配图的 AI 图片生成服务。</p>
+                <p className="text-xs mt-2 text-amber-500 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  API Key 仅保存在本地浏览器中，不会上传到任何服务器
+                </p>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium mb-2 block">快速选择服务商 (按住 Ctrl/Command 键点击跳转官网)</Label>
+                <div className="flex flex-wrap gap-2">
+                  {imageGenerationPresets.map(preset => (
+                    <button
+                      key={preset.name}
+                      onClick={(e) => {
+                        if (e.ctrlKey || e.metaKey || e.button === 1) {
+                          if (preset.url) {
+                            window.open(preset.url, '_blank');
+                          }
+                        } else {
+                          setImageGenerationConfig(preset.config);
+                        }
+                      }}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
+                        imageGenerationConfig.provider === preset.config.provider
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
+                      )}
+                    >
+                      {preset.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">API Base URL</Label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      value={imageGenerationConfig.baseUrl}
+                      onChange={e => setImageGenerationConfig(prev => ({ ...prev, baseUrl: e.target.value }))}
+                      placeholder="https://api.openai.com/v1"
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">API Key</Label>
+                  <div className="relative">
+                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type={showImageGenerationKey ? 'text' : 'password'}
+                      value={imageGenerationConfig.apiKey}
+                      onChange={e => setImageGenerationConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                      placeholder="sk-..."
+                      className="pl-9 pr-10"
+                    />
+                    <button
+                      onClick={() => setShowImageGenerationKey(!showImageGenerationKey)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showImageGenerationKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">模型名称</Label>
+                  <Input
+                    value={imageGenerationConfig.model}
+                    onChange={e => setImageGenerationConfig(prev => ({ ...prev, model: e.target.value }))}
+                    placeholder="dall-e-3"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">提供商</Label>
+                  <Select
+                    value={imageGenerationConfig.provider}
+                    onValueChange={(v: ImageGenerationProvider) => setImageGenerationConfig(prev => ({ ...prev, provider: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="openai">OpenAI</SelectItem>
+                      <SelectItem value="dashscope">通义千问</SelectItem>
+                      <SelectItem value="stability">Stability AI</SelectItem>
+                      <SelectItem value="midjourney">Midjourney</SelectItem>
+                      <SelectItem value="custom">自定义</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">图片尺寸</Label>
+                  <Select
+                    value={imageGenerationConfig.size}
+                    onValueChange={(v) => setImageGenerationConfig(prev => ({ ...prev, size: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="512x512">512x512</SelectItem>
+                      <SelectItem value="1024x1024">1024x1024</SelectItem>
+                      <SelectItem value="1024x1792">1024x1792</SelectItem>
+                      <SelectItem value="1792x1024">1792x1024</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">图片质量</Label>
+                  <Select
+                    value={imageGenerationConfig.quality}
+                    onValueChange={(v) => setImageGenerationConfig(prev => ({ ...prev, quality: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="standard">标准</SelectItem>
+                      <SelectItem value="hd">高清</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">图片风格</Label>
+                  <Select
+                    value={imageGenerationConfig.style}
+                    onValueChange={(v) => setImageGenerationConfig(prev => ({ ...prev, style: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="vivid">生动</SelectItem>
+                      <SelectItem value="natural">自然</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
 
