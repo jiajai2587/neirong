@@ -15,6 +15,7 @@ import { GenerateArticleView } from '@/components/GenerateArticleView';
 import { HotArticlesView } from '@/components/HotArticlesView';
 import { ApiSettingsView } from '@/components/ApiSettingsView';
 import { ManualView } from '@/components/ManualView';
+import { ContactView } from '@/components/ContactView';
 import { cn } from '@/lib/utils';
 
 function App() {
@@ -84,6 +85,8 @@ function App() {
         return <ApiSettingsView />;
       case 'manual':
         return <ManualView />;
+      case 'contact':
+        return <ContactView />;
       default:
         return (
           <ContentEditor

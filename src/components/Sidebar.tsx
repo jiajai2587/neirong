@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   FileText, Search, TrendingUp, Brain, AlertTriangle, Megaphone,
   FileCheck, Sparkles, Rss, Settings, BookOpen, ChevronLeft, ChevronRight,
-  Moon, Sun
+  Moon, Sun, MessageCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { applyTheme, getSelectedTheme } from '@/lib/themes';
@@ -34,6 +34,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'hot-articles', label: '热门文章采集', icon: <Rss className="w-4 h-4" /> },
   { id: 'api-settings', label: 'API 接口设置', icon: <Settings className="w-4 h-4" /> },
   { id: 'manual', label: '使用说明', icon: <BookOpen className="w-4 h-4" /> },
+  { id: 'contact', label: '联系方式', icon: <MessageCircle className="w-4 h-4" /> },
 ];
 
 export function Sidebar({ activeTab, onTabChange, collapsed, onToggle }: SidebarProps) {
