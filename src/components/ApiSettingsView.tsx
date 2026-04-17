@@ -484,30 +484,7 @@ export function ApiSettingsView() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">联系作者</CardTitle>
-          <CardDescription>如有问题或建议，欢迎联系</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
-            <MessageCircle className="w-5 h-5 text-green-500" />
-            <div>
-              <p className="text-sm font-medium">微信</p>
-              <p className="text-sm text-muted-foreground">xiaoqi19860607</p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="ml-auto"
-              onClick={() => navigator.clipboard.writeText('xiaoqi19860607')}
-            >
-              <Check className="w-3 h-3 mr-1" />
-              复制
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+
     </div>
   );
 }

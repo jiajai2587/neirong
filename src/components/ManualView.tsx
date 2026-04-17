@@ -4,7 +4,7 @@ import { Separator } from '@/components/ui/separator';
 import {
   BookOpen, FileText, Brain, Search, TrendingUp, FileCheck,
   AlertTriangle, Megaphone, Sparkles, Rss, Settings, ChevronRight,
-  Lightbulb, CheckCircle2, ArrowRight
+  Lightbulb, CheckCircle2, ArrowRight, Mail, MessageCircle
 } from 'lucide-react';
 
 export function ManualView() {
@@ -633,6 +633,44 @@ export function ManualView() {
             </h4>
             <p className="text-sm text-muted-foreground ml-6">
               点击"保存配置"将设置保存到本地浏览器。API Key 仅保存在你的设备上，不会上传到任何服务器。
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'contact',
+      title: '联系我们',
+      icon: <MessageCircle className="w-5 h-5 text-green-500" />,
+      content: (
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed">
+            如有问题或建议，欢迎通过以下方式联系我们：
+          </p>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+              <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center">
+                <MessageCircle className="w-4 h-4 text-green-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">微信</p>
+                <p className="text-sm text-muted-foreground">xiaoqi19860607</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+              <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
+                <Mail className="w-4 h-4 text-blue-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">邮箱</p>
+                <p className="text-sm text-muted-foreground">2742938881@qq.com</p>
+              </div>
+            </div>
+          </div>
+          <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+            <p className="text-sm flex items-center gap-2 text-blue-600 dark:text-blue-400">
+              <Lightbulb className="w-4 h-4" />
+              <strong>提示</strong>：工作日内我们会在 24 小时内回复你的问题
             </p>
           </div>
         </div>
