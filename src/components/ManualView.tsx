@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
   BookOpen, FileText, Brain, Search, TrendingUp, FileCheck,
@@ -652,10 +653,18 @@ export function ManualView() {
               <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center">
                 <MessageCircle className="w-4 h-4 text-green-500" />
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-medium">微信</p>
                 <p className="text-sm text-muted-foreground">xiaoqi19860607</p>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigator.clipboard.writeText('xiaoqi19860607')}
+              >
+                <Check className="w-3 h-3 mr-1" />
+                复制
+              </Button>
             </div>
             <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
               <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
