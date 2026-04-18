@@ -14,6 +14,8 @@ import type {
   HotArticleSource,
   PolishConfig,
   PolishProvider,
+  FormatConfig,
+  FormatProvider,
 } from './types';
 
 // ==================== 默认配置 ====================
@@ -281,6 +283,73 @@ export const DEFAULT_POLISH_CONFIGS: Record<PolishProvider, PolishConfig> = {
   },
 };
 
+export const DEFAULT_FORMAT_CONFIGS: Record<FormatProvider, FormatConfig> = {
+  openai: {
+    provider: 'openai',
+    baseUrl: 'https://api.openai.com/v1',
+    apiKey: '',
+    model: 'gpt-4o',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  dashscope: {
+    provider: 'dashscope',
+    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    apiKey: '',
+    model: 'qwen-turbo',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  deepseek: {
+    provider: 'deepseek',
+    baseUrl: 'https://api.deepseek.com/v1',
+    apiKey: '',
+    model: 'deepseek-chat',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  doubao: {
+    provider: 'doubao',
+    baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
+    apiKey: '',
+    model: 'ep-20241203163449-j7x68',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  zhipu: {
+    provider: 'zhipu',
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+    apiKey: '',
+    model: 'glm-4-flash',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  wenxin: {
+    provider: 'wenxin',
+    baseUrl: 'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat',
+    apiKey: '',
+    model: 'ernie-4.0-turbo-8k',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  anthropic: {
+    provider: 'anthropic',
+    baseUrl: 'https://api.anthropic.com/v1',
+    apiKey: '',
+    model: 'claude-3-5-sonnet-20241022',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  custom: {
+    provider: 'custom',
+    baseUrl: 'https://api.example.com/v1',
+    apiKey: '',
+    model: 'custom-model',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+};
+
 export const DEFAULT_HOT_ARTICLES_CONFIG: HotArticlesConfig = {
   useCustom: false,
   apiUrl: '',
@@ -295,7 +364,6 @@ export const DEFAULT_HOT_ARTICLE_SOURCES: HotArticleSource[] = [
     url: 'https://developers.weixin.qq.com/doc/',
     platform: 'wechat',
     apiUrl: 'https://api.weixin.qq.com/',
-    freeQuota: '免费额度',
   },
   {
     id: 'toutiao',
@@ -303,7 +371,6 @@ export const DEFAULT_HOT_ARTICLE_SOURCES: HotArticleSource[] = [
     url: 'https://open.toutiao.com/',
     platform: 'toutiao',
     apiUrl: 'https://developer.toutiao.com/api/',
-    freeQuota: '免费额度',
   },
   {
     id: 'zhihu',
@@ -311,7 +378,6 @@ export const DEFAULT_HOT_ARTICLE_SOURCES: HotArticleSource[] = [
     url: 'https://www.zhihu.com/developer',
     platform: 'zhihu',
     apiUrl: 'https://api.zhihu.com/',
-    freeQuota: '免费额度',
   },
   {
     id: 'xiaohongshu',
@@ -319,7 +385,6 @@ export const DEFAULT_HOT_ARTICLE_SOURCES: HotArticleSource[] = [
     url: 'https://open.xiaohongshu.com/',
     platform: 'xiaohongshu',
     apiUrl: 'https://ark.cn-beijing.volces.com/api/v3',
-    freeQuota: '免费额度',
   },
   {
     id: 'douyin',
@@ -327,15 +392,13 @@ export const DEFAULT_HOT_ARTICLE_SOURCES: HotArticleSource[] = [
     url: 'https://developer.open-douyin.com/',
     platform: 'douyin',
     apiUrl: 'https://developer.toutiao.com/api/',
-    freeQuota: '免费额度',
   },
   {
-    id: 'baijiahao',
+    id: 'baiJiahao',
     name: '百家号',
     url: 'https://baijiahao.baidu.com/builder/help',
-    platform: 'baijiahao',
+    platform: 'baiJiahao',
     apiUrl: 'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat',
-    freeQuota: '免费额度',
   },
 ];
 
@@ -346,6 +409,7 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
   hotArticles: DEFAULT_HOT_ARTICLES_CONFIG,
   imageGeneration: DEFAULT_IMAGE_GENERATION_CONFIGS.openai,
   polish: DEFAULT_POLISH_CONFIGS.dashscope,
+  format: DEFAULT_FORMAT_CONFIGS.dashscope,
 };
 
 // ==================== 配置存储 ====================
@@ -422,6 +486,15 @@ export function getPolishConfig(): PolishConfig {
 export function savePolishConfig(config: Partial<PolishConfig>): void {
   const current = getAppConfig();
   saveAppConfig({ ...current, polish: { ...current.polish, ...config } });
+}
+
+export function getFormatConfig(): FormatConfig {
+  return getAppConfig().format;
+}
+
+export function saveFormatConfig(config: Partial<FormatConfig>): void {
+  const current = getAppConfig();
+  saveAppConfig({ ...current, format: { ...current.format, ...config } });
 }
 
 // 兼容旧版 API 配置

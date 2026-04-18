@@ -25,6 +25,19 @@ export interface PolishConfig {
   temperature: number;
 }
 
+// 排版服务提供商类型
+export type FormatProvider = 'openai' | 'dashscope' | 'deepseek' | 'doubao' | 'zhipu' | 'wenxin' | 'anthropic' | 'custom';
+
+// 排版配置
+export interface FormatConfig {
+  provider: FormatProvider;
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+  maxTokens: number;
+  temperature: number;
+}
+
 // 热门文章来源配置
 export interface HotArticleSource {
   id: string;
@@ -89,6 +102,7 @@ export interface AppConfig {
   hotArticles: HotArticlesConfig;
   imageGeneration: ImageGenerationConfig;
   polish: PolishConfig;
+  format: FormatConfig;
 }
 
 export interface AiDetectionResult {

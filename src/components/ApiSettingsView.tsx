@@ -22,6 +22,8 @@ import type {
   HotArticlesConfig,
   PolishConfig,
   PolishProvider,
+  FormatConfig,
+  FormatProvider,
 } from '@/lib/types';
 import {
   getAppConfig,
@@ -38,6 +40,8 @@ import {
   saveHotArticlesConfig,
   getPolishConfig,
   savePolishConfig,
+  getFormatConfig,
+  saveFormatConfig,
   callAiApi,
   DEFAULT_LLM_CONFIGS,
   DEFAULT_AI_DETECTION_CONFIGS,
@@ -46,6 +50,7 @@ import {
   DEFAULT_HOT_ARTICLES_CONFIG,
   DEFAULT_HOT_ARTICLE_SOURCES,
   DEFAULT_POLISH_CONFIGS,
+  DEFAULT_FORMAT_CONFIGS,
 } from '@/lib/api';
 
 // 平台API文档链接
@@ -61,15 +66,12 @@ const PLATFORM_API_URLS: Record<string, string> = {
 // 免费额度配置
 const FREE_QUOTA: Record<string, string> = {
   '通义千问': '免费额度',
-  'OpenAI': '',
-  'Claude': '',
-  'DeepSeek': '免费额度',
   '豆包': '免费额度',
   '智谱': '免费额度',
   '文心一言': '免费额度',
   'Moonshot': '免费额度',
   'Kimi': '免费额度',
-  '自定义': '',
+  'DeepSeek': '免费额度',
 };
 
 export function ApiSettingsView() {
@@ -80,11 +82,13 @@ export function ApiSettingsView() {
   const [imageGenerationConfig, setImageGenerationConfig] = useState<ImageGenerationConfig>(getImageGenerationConfig());
   const [hotArticlesConfig, setHotArticlesConfig] = useState<HotArticlesConfig>(getHotArticlesConfig());
   const [polishConfig, setPolishConfig] = useState<PolishConfig>(getPolishConfig());
+  const [formatConfig, setFormatConfig] = useState<FormatConfig>(getFormatConfig());
   const [showLlmKey, setShowLlmKey] = useState(false);
   const [showAiDetectionKey, setShowAiDetectionKey] = useState(false);
   const [showContentSafetyKey, setShowContentSafetyKey] = useState(false);
   const [showImageGenerationKey, setShowImageGenerationKey] = useState(false);
   const [showPolishKey, setShowPolishKey] = useState(false);
+  const [showFormatKey, setShowFormatKey] = useState(false);
   const [saved, setSaved] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -139,6 +143,17 @@ export function ApiSettingsView() {
     { name: '自定义', config: DEFAULT_POLISH_CONFIGS.custom, url: '' },
   ];
 
+  const formatPresets: Array<{ name: string; config: FormatConfig; url: string }> = [
+    { name: '通义千问', config: DEFAULT_FORMAT_CONFIGS.dashscope, url: 'https://dashscope.console.aliyun.com/' },
+    { name: 'OpenAI', config: DEFAULT_FORMAT_CONFIGS.openai, url: 'https://platform.openai.com/' },
+    { name: 'Claude', config: DEFAULT_FORMAT_CONFIGS.anthropic, url: 'https://console.anthropic.com/' },
+    { name: 'DeepSeek', config: DEFAULT_FORMAT_CONFIGS.deepseek, url: 'https://platform.deepseek.com/' },
+    { name: '豆包', config: DEFAULT_FORMAT_CONFIGS.doubao, url: 'https://console.volcengine.com/ark/' },
+    { name: '智谱', config: DEFAULT_FORMAT_CONFIGS.zhipu, url: 'https://open.bigmodel.cn/' },
+    { name: '文心一言', config: DEFAULT_FORMAT_CONFIGS.wenxin, url: 'https://cloud.baidu.com/product/wenxinworkshop' },
+    { name: '自定义', config: DEFAULT_FORMAT_CONFIGS.custom, url: '' },
+  ];
+
   const handleSave = useCallback(() => {
     saveLlmConfig(llmConfig);
     saveAiDetectionConfig(aiDetectionConfig);
@@ -146,9 +161,10 @@ export function ApiSettingsView() {
     saveImageGenerationConfig(imageGenerationConfig);
     saveHotArticlesConfig(hotArticlesConfig);
     savePolishConfig(polishConfig);
+    saveFormatConfig(formatConfig);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
-  }, [llmConfig, aiDetectionConfig, contentSafetyConfig, imageGenerationConfig, hotArticlesConfig, polishConfig]);
+  }, [llmConfig, aiDetectionConfig, contentSafetyConfig, imageGenerationConfig, hotArticlesConfig, polishConfig, formatConfig]);
 
   const handleTestLlm = useCallback(async () => {
     if (!llmConfig.apiKey) {
@@ -230,6 +246,22 @@ export function ApiSettingsView() {
     setTesting(false);
   }, [polishConfig]);
 
+  const handleTestFormat = useCallback(async () => {
+    if (!formatConfig.apiKey) {
+      setTestResult({ success: false, message: '请先输入 API Key' });
+      return;
+    }
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const result = await callAiApi('你好，请排版这句话', '你是一个排版助手。', formatConfig);
+      setTestResult({ success: true, message: `连接成功！` });
+    } catch (error: any) {
+      setTestResult({ success: false, message: error.message || '连接失败，请检查配置' });
+    }
+    setTesting(false);
+  }, [formatConfig]);
+
   const handleTestHotArticles = useCallback(async () => {
     if (!hotArticlesConfig.apiUrl) {
       setTestResult({ success: false, message: '请先输入API地址' });
@@ -296,7 +328,7 @@ export function ApiSettingsView() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="llm" className="flex items-center gap-2">
                 <Bot className="w-4 h-4" />
                 大模型
@@ -316,6 +348,10 @@ export function ApiSettingsView() {
               <TabsTrigger value="polish" className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4" />
                 AI 润色
+              </TabsTrigger>
+              <TabsTrigger value="format" className="flex items-center gap-2">
+                <MessageCircle className="w-4 h-4" />
+                排版
               </TabsTrigger>
               <TabsTrigger value="hot-articles" className="flex items-center gap-2">
                 <Rss className="w-4 h-4" />
@@ -357,7 +393,7 @@ export function ApiSettingsView() {
                     >
                       {preset.name}
                       {FREE_QUOTA[preset.name] && (
-                        <Badge variant="outline" className="text-xs ml-1">{FREE_QUOTA[preset.name]}</Badge>
+                        <Badge className="text-xs ml-1 bg-green-100 text-green-700 hover:bg-green-200">{FREE_QUOTA[preset.name]}</Badge>
                       )}
                     </button>
                   ))}
@@ -883,7 +919,7 @@ export function ApiSettingsView() {
                     >
                       {preset.name}
                       {FREE_QUOTA[preset.name] && (
-                        <Badge variant="outline" className="text-xs ml-1">{FREE_QUOTA[preset.name]}</Badge>
+                        <Badge className="text-xs ml-1 bg-green-100 text-green-700 hover:bg-green-200">{FREE_QUOTA[preset.name]}</Badge>
                       )}
                     </button>
                   ))}
@@ -1002,6 +1038,155 @@ export function ApiSettingsView() {
               </div>
             </TabsContent>
 
+            <TabsContent value="format" className="space-y-4 mt-4">
+              <div className="space-y-3 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">📝 排版配置</p>
+                <p>配置用于文章排版、格式化等功能的 AI 服务。</p>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium mb-2 block">快速选择服务商 (按住 Ctrl/Command 键点击跳转官网)</Label>
+                <div className="flex flex-wrap gap-2">
+                  {formatPresets.map(preset => (
+                    <button
+                      key={preset.name}
+                      onClick={(e) => {
+                        if (e.ctrlKey || e.metaKey || e.button === 1) {
+                          if (preset.url) {
+                            window.open(preset.url, '_blank');
+                          }
+                        } else {
+                          setFormatConfig(preset.config);
+                        }
+                      }}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
+                        formatConfig.provider === preset.config.provider
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
+                      )}
+                    >
+                      {preset.name}
+                      {FREE_QUOTA[preset.name] && (
+                        <Badge className="text-xs ml-1 bg-green-100 text-green-700 hover:bg-green-200">{FREE_QUOTA[preset.name]}</Badge>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">API Base URL</Label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      value={formatConfig.baseUrl}
+                      onChange={e => setFormatConfig(prev => ({ ...prev, baseUrl: e.target.value }))}
+                      placeholder="https://api.openai.com/v1"
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">API Key</Label>
+                  <div className="relative">
+                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type={showFormatKey ? 'text' : 'password'}
+                      value={formatConfig.apiKey}
+                      onChange={e => setFormatConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                      placeholder="sk-..."
+                      className="pl-9 pr-10"
+                    />
+                    <button
+                      onClick={() => setShowFormatKey(!showFormatKey)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showFormatKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">模型名称</Label>
+                  <Input
+                    value={formatConfig.model}
+                    onChange={e => setFormatConfig(prev => ({ ...prev, model: e.target.value }))}
+                    placeholder="gpt-4o"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">提供商</Label>
+                  <Select
+                    value={formatConfig.provider}
+                    onValueChange={(v: FormatProvider) => setFormatConfig(prev => ({ ...prev, provider: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="openai">OpenAI</SelectItem>
+                      <SelectItem value="dashscope">通义千问</SelectItem>
+                      <SelectItem value="deepseek">DeepSeek</SelectItem>
+                      <SelectItem value="doubao">豆包</SelectItem>
+                      <SelectItem value="zhipu">智谱</SelectItem>
+                      <SelectItem value="wenxin">文心一言</SelectItem>
+                      <SelectItem value="anthropic">Claude</SelectItem>
+                      <SelectItem value="custom">自定义</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-lg border border-border space-y-4">
+                <h3 className="text-sm font-medium">高级设置</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm">最大 Token 数</Label>
+                      <span className="text-sm text-muted-foreground">{formatConfig.maxTokens}</span>
+                    </div>
+                    <Slider
+                      value={[formatConfig.maxTokens]}
+                      onValueChange={([v]) => setFormatConfig(prev => ({ ...prev, maxTokens: v }))}
+                      min={256}
+                      max={8192}
+                      step={256}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm">Temperature（创造性）</Label>
+                      <span className="text-sm text-muted-foreground">{formatConfig.temperature.toFixed(1)}</span>
+                    </div>
+                    <Slider
+                      value={[formatConfig.temperature]}
+                      onValueChange={([v]) => setFormatConfig(prev => ({ ...prev, temperature: v }))}
+                      min={0}
+                      max={2}
+                      step={0.1}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button onClick={handleTestFormat} disabled={testing} variant="outline">
+                  {testing ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                      测试中...
+                    </span>
+                  ) : (
+                    '测试连接'
+                  )}
+                </Button>
+              </div>
+            </TabsContent>
+
             <TabsContent value="hot-articles" className="space-y-4 mt-4">
               <div className="space-y-3 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
                 <p className="font-medium text-foreground">📰 热门文章配置</p>
@@ -1037,7 +1222,7 @@ export function ApiSettingsView() {
                     >
                       {source.name}
                       {source.freeQuota && (
-                        <Badge variant="outline" className="text-xs ml-1">{source.freeQuota}</Badge>
+                        <Badge className="text-xs ml-1 bg-green-100 text-green-700 hover:bg-green-200">{source.freeQuota}</Badge>
                       )}
                       <ExternalLink className="w-3 h-3 ml-1" />
                     </button>
