@@ -55,6 +55,7 @@ export interface HotArticlesConfig {
   useCustom: boolean;
   apiUrl: string;
   apiKey?: string;
+  platform?: string;
 }
 
 // 完整应用配置

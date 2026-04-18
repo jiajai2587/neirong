@@ -215,6 +215,7 @@ export const DEFAULT_HOT_ARTICLES_CONFIG: HotArticlesConfig = {
   useCustom: false,
   apiUrl: '',
   apiKey: '',
+  platform: 'all',
 };
 
 export const DEFAULT_APP_CONFIG: AppConfig = {

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Rss, ExternalLink, Search, Eye, Calendar, Tag, Loader2, Copy, Check, RefreshCw, Settings, Globe } from 'lucide-react';
 import type { HotArticle } from '@/lib/types';
 import { HOT_ARTICLES, fetchHotArticles } from '@/lib/hotArticles';
-import { getHotArticlesConfig, saveHotArticlesConfig } from '@/lib/api';
+import { getHotArticlesConfig, saveHotArticlesConfig, DEFAULT_HOT_ARTICLE_SOURCES } from '@/lib/api';
 
 // 平台 API 文档链接
 const PLATFORM_API_URLS: Record<string, string> = {
@@ -126,6 +126,8 @@ export function HotArticlesView() {
   const [version, setVersion] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
   const [hotArticlesConfig, setHotArticlesConfig] = useState(getHotArticlesConfig());
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   // 从池中随机选取文章
   const loadArticles = useCallback(async (platform?: string) => {
@@ -193,6 +195,58 @@ export function HotArticlesView() {
     setShowSettings(false);
     setVersion(v => v + 1);
     loadArticles(platformFilter === 'all' ? undefined : platformFilter);
+  };
+
+  const handleTestApi = async () => {
+    if (!hotArticlesConfig.apiUrl) {
+      setTestResult({ success: false, message: '请先输入API地址' });
+      return;
+    }
+    
+    setTesting(true);
+    setTestResult(null);
+    
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (hotArticlesConfig.apiKey) {
+        headers['Authorization'] = `Bearer ${hotArticlesConfig.apiKey}`;
+      }
+
+      const response = await fetch(hotArticlesConfig.apiUrl, {
+        method: 'GET',
+        headers,
+        timeout: 10000,
+      });
+
+      if (!response.ok) {
+        throw new Error(`API 请求失败: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // 检查响应格式
+      const articles = data.articles || data.data || data;
+      if (Array.isArray(articles)) {
+        setTestResult({ 
+          success: true, 
+          message: `测试成功！获取到 ${articles.length} 篇文章` 
+        });
+      } else {
+        setTestResult({ 
+          success: false, 
+          message: 'API 响应格式不正确，请确保返回文章数组或包含 articles/data 字段' 
+        });
+      }
+    } catch (error: any) {
+      setTestResult({ 
+        success: false, 
+        message: error.message || '测试失败，请检查网络连接或API地址' 
+      });
+    } finally {
+      setTesting(false);
+    }
   };
 
   const filteredArticles = articles
@@ -296,6 +350,25 @@ export function HotArticlesView() {
                 {hotArticlesConfig.useCustom && (
                   <div className="space-y-4">
                     <div className="space-y-2">
+                      <Label htmlFor="platform">平台名称</Label>
+                      <Select
+                        value={hotArticlesConfig.platform || 'all'}
+                        onValueChange={(value) => setHotArticlesConfig(prev => ({ ...prev, platform: value }))}
+                      >
+                        <SelectTrigger id="platform">
+                          <SelectValue placeholder="选择平台" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">全部平台</SelectItem>
+                          {DEFAULT_HOT_ARTICLE_SOURCES.map(source => (
+                            <SelectItem key={source.id} value={source.id}>
+                              {source.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
                       <Label htmlFor="api-url">API 地址</Label>
                       <Input
                         id="api-url"
@@ -322,9 +395,31 @@ export function HotArticlesView() {
                     </div>
                   </div>
                 )}
-                <Button onClick={handleSaveConfig} className="w-full">
-                  保存配置
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={handleSaveConfig} className="flex-1">
+                    保存配置
+                  </Button>
+                  <Button 
+                    onClick={handleTestApi} 
+                    disabled={testing || !hotArticlesConfig.apiUrl}
+                    variant="outline"
+                  >
+                    {testing ? (
+                      <span className="flex items-center gap-2">
+                        <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                        测试中...
+                      </span>
+                    ) : (
+                      '测试链接'
+                    )}
+                  </Button>
+                </div>
+                {testResult && (
+                  <div className={testResult.success ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'} className="p-3 rounded-lg text-sm mt-4">
+                    <p className="font-medium">{testResult.success ? '✅ 测试成功' : '❌ 测试失败'}</p>
+                    <p className="text-xs mt-1 opacity-80">{testResult.message}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
