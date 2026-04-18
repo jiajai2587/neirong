@@ -12,6 +12,29 @@ export type ContentSafetyProvider = 'aliyun' | 'tencent' | 'baidu' | 'local';
 // 图片生成服务提供商类型
 export type ImageGenerationProvider = 'openai' | 'dashscope' | 'stability' | 'midjourney' | 'custom';
 
+// AI润色服务提供商类型
+export type PolishProvider = 'openai' | 'dashscope' | 'deepseek' | 'doubao' | 'zhipu' | 'wenxin' | 'anthropic' | 'custom';
+
+// AI润色配置
+export interface PolishConfig {
+  provider: PolishProvider;
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+  maxTokens: number;
+  temperature: number;
+}
+
+// 热门文章来源配置
+export interface HotArticleSource {
+  id: string;
+  name: string;
+  url: string;
+  platform: string;
+  apiUrl?: string;
+  freeQuota?: string;
+}
+
 // 图片生成配置
 export interface ImageGenerationConfig {
   provider: ImageGenerationProvider;
@@ -65,6 +88,7 @@ export interface AppConfig {
   contentSafety: ContentSafetyConfig;
   hotArticles: HotArticlesConfig;
   imageGeneration: ImageGenerationConfig;
+  polish: PolishConfig;
 }
 
 export interface AiDetectionResult {

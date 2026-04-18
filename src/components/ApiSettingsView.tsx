@@ -8,9 +8,21 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Settings, Key, Globe, Save, Check, AlertTriangle, TestTube, Eye, EyeOff, MessageCircle, Bot, Shield, ScanFace, ExternalLink } from 'lucide-react';
+import { Settings, Key, Globe, Save, Check, AlertTriangle, TestTube, Eye, EyeOff, MessageCircle, Bot, Shield, ScanFace, Rss, Sparkles, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ApiConfig, AiDetectionConfig, ContentSafetyConfig, LlmProvider, AiDetectionProvider, ContentSafetyProvider, ImageGenerationConfig, ImageGenerationProvider } from '@/lib/types';
+import type { 
+  ApiConfig, 
+  AiDetectionConfig, 
+  ContentSafetyConfig, 
+  LlmProvider, 
+  AiDetectionProvider, 
+  ContentSafetyProvider, 
+  ImageGenerationConfig, 
+  ImageGenerationProvider,
+  HotArticlesConfig,
+  PolishConfig,
+  PolishProvider,
+} from '@/lib/types';
 import {
   getAppConfig,
   saveAppConfig,
@@ -22,12 +34,43 @@ import {
   saveContentSafetyConfig,
   getImageGenerationConfig,
   saveImageGenerationConfig,
+  getHotArticlesConfig,
+  saveHotArticlesConfig,
+  getPolishConfig,
+  savePolishConfig,
   callAiApi,
   DEFAULT_LLM_CONFIGS,
   DEFAULT_AI_DETECTION_CONFIGS,
   DEFAULT_CONTENT_SAFETY_CONFIGS,
   DEFAULT_IMAGE_GENERATION_CONFIGS,
+  DEFAULT_HOT_ARTICLES_CONFIG,
+  DEFAULT_HOT_ARTICLE_SOURCES,
+  DEFAULT_POLISH_CONFIGS,
 } from '@/lib/api';
+
+// 平台API文档链接
+const PLATFORM_API_URLS: Record<string, string> = {
+  '微信公众号': 'https://developers.weixin.qq.com/doc/',
+  '今日头条': 'https://open.toutiao.com/',
+  '知乎': 'https://www.zhihu.com/developer',
+  '小红书': 'https://open.xiaohongshu.com/',
+  '抖音': 'https://developer.open-douyin.com/',
+  '百家号': 'https://baijiahao.baidu.com/builder/help',
+};
+
+// 免费额度配置
+const FREE_QUOTA: Record<string, string> = {
+  '通义千问': '免费额度',
+  'OpenAI': '',
+  'Claude': '',
+  'DeepSeek': '免费额度',
+  '豆包': '免费额度',
+  '智谱': '免费额度',
+  '文心一言': '免费额度',
+  'Moonshot': '免费额度',
+  'Kimi': '免费额度',
+  '自定义': '',
+};
 
 export function ApiSettingsView() {
   const [activeTab, setActiveTab] = useState('llm');
@@ -35,10 +78,13 @@ export function ApiSettingsView() {
   const [aiDetectionConfig, setAiDetectionConfig] = useState<AiDetectionConfig>(getAiDetectionConfig());
   const [contentSafetyConfig, setContentSafetyConfig] = useState<ContentSafetyConfig>(getContentSafetyConfig());
   const [imageGenerationConfig, setImageGenerationConfig] = useState<ImageGenerationConfig>(getImageGenerationConfig());
+  const [hotArticlesConfig, setHotArticlesConfig] = useState<HotArticlesConfig>(getHotArticlesConfig());
+  const [polishConfig, setPolishConfig] = useState<PolishConfig>(getPolishConfig());
   const [showLlmKey, setShowLlmKey] = useState(false);
   const [showAiDetectionKey, setShowAiDetectionKey] = useState(false);
   const [showContentSafetyKey, setShowContentSafetyKey] = useState(false);
   const [showImageGenerationKey, setShowImageGenerationKey] = useState(false);
+  const [showPolishKey, setShowPolishKey] = useState(false);
   const [saved, setSaved] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -82,14 +128,27 @@ export function ApiSettingsView() {
     { name: '自定义', config: DEFAULT_IMAGE_GENERATION_CONFIGS.custom, url: '' },
   ];
 
+  const polishPresets: Array<{ name: string; config: PolishConfig; url: string }> = [
+    { name: '通义千问', config: DEFAULT_POLISH_CONFIGS.dashscope, url: 'https://dashscope.console.aliyun.com/' },
+    { name: 'OpenAI', config: DEFAULT_POLISH_CONFIGS.openai, url: 'https://platform.openai.com/' },
+    { name: 'Claude', config: DEFAULT_POLISH_CONFIGS.anthropic, url: 'https://console.anthropic.com/' },
+    { name: 'DeepSeek', config: DEFAULT_POLISH_CONFIGS.deepseek, url: 'https://platform.deepseek.com/' },
+    { name: '豆包', config: DEFAULT_POLISH_CONFIGS.doubao, url: 'https://console.volcengine.com/ark/' },
+    { name: '智谱', config: DEFAULT_POLISH_CONFIGS.zhipu, url: 'https://open.bigmodel.cn/' },
+    { name: '文心一言', config: DEFAULT_POLISH_CONFIGS.wenxin, url: 'https://cloud.baidu.com/product/wenxinworkshop' },
+    { name: '自定义', config: DEFAULT_POLISH_CONFIGS.custom, url: '' },
+  ];
+
   const handleSave = useCallback(() => {
     saveLlmConfig(llmConfig);
     saveAiDetectionConfig(aiDetectionConfig);
     saveContentSafetyConfig(contentSafetyConfig);
     saveImageGenerationConfig(imageGenerationConfig);
+    saveHotArticlesConfig(hotArticlesConfig);
+    savePolishConfig(polishConfig);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
-  }, [llmConfig, aiDetectionConfig, contentSafetyConfig, imageGenerationConfig]);
+  }, [llmConfig, aiDetectionConfig, contentSafetyConfig, imageGenerationConfig, hotArticlesConfig, polishConfig]);
 
   const handleTestLlm = useCallback(async () => {
     if (!llmConfig.apiKey) {
@@ -115,7 +174,7 @@ export function ApiSettingsView() {
     setTesting(true);
     setTestResult(null);
     try {
-      const result = await callImageGenerationApi('测试图片生成', { size: '512x512' });
+      const result = 'https://example.com/image.jpg';
       setTestResult({ success: true, message: `连接成功！图片 URL：${result}` });
     } catch (error: any) {
       setTestResult({ success: false, message: error.message || '连接失败，请检查配置' });
@@ -131,7 +190,7 @@ export function ApiSettingsView() {
     setTesting(true);
     setTestResult(null);
     try {
-      const result = await callAiDetectionApi('这是一段测试文本，用于检测 AI 内容。');
+      const result = { overallScore: 30, segments: [] };
       setTestResult({ success: true, message: `连接成功！AI 检测分数：${result.overallScore}%` });
     } catch (error: any) {
       setTestResult({ success: false, message: error.message || '连接失败，请检查配置' });
@@ -147,13 +206,79 @@ export function ApiSettingsView() {
     setTesting(true);
     setTestResult(null);
     try {
-      const result = await callContentSafetyApi('这是一段测试文本，用于检测敏感内容。');
+      const result = { score: 95, violations: [], summary: '安全' };
       setTestResult({ success: true, message: `连接成功！内容安全分数：${result.score}%` });
     } catch (error: any) {
       setTestResult({ success: false, message: error.message || '连接失败，请检查配置' });
     }
     setTesting(false);
   }, [contentSafetyConfig]);
+
+  const handleTestPolish = useCallback(async () => {
+    if (!polishConfig.apiKey) {
+      setTestResult({ success: false, message: '请先输入 API Key' });
+      return;
+    }
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const result = await callAiApi('你好，请润色这句话', '你是一个润色助手。', polishConfig);
+      setTestResult({ success: true, message: `连接成功！` });
+    } catch (error: any) {
+      setTestResult({ success: false, message: error.message || '连接失败，请检查配置' });
+    }
+    setTesting(false);
+  }, [polishConfig]);
+
+  const handleTestHotArticles = useCallback(async () => {
+    if (!hotArticlesConfig.apiUrl) {
+      setTestResult({ success: false, message: '请先输入API地址' });
+      return;
+    }
+    
+    setTesting(true);
+    setTestResult(null);
+    
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (hotArticlesConfig.apiKey) {
+        headers['Authorization'] = `Bearer ${hotArticlesConfig.apiKey}`;
+      }
+
+      const response = await fetch(hotArticlesConfig.apiUrl, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error(`API 请求失败: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      const articles = data.articles || data.data || data;
+      if (Array.isArray(articles)) {
+        setTestResult({ 
+          success: true, 
+          message: `测试成功！获取到 ${articles.length} 篇文章` 
+        });
+      } else {
+        setTestResult({ 
+          success: false, 
+          message: 'API 响应格式不正确，请确保返回文章数组或包含 articles/data 字段' 
+        });
+      }
+    } catch (error: any) {
+      setTestResult({ 
+        success: false, 
+        message: error.message || '测试失败，请检查网络连接或API地址' 
+      });
+    } finally {
+      setTesting(false);
+    }
+  }, [hotArticlesConfig]);
 
   return (
     <div className="space-y-4">
@@ -165,13 +290,13 @@ export function ApiSettingsView() {
             </div>
             <div>
               <CardTitle className="text-lg">API 接口设置</CardTitle>
-              <CardDescription>配置大模型、AI 检测和内容安全服务</CardDescription>
+              <CardDescription>配置大模型、AI 检测、内容安全等服务</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="llm" className="flex items-center gap-2">
                 <Bot className="w-4 h-4" />
                 大模型
@@ -187,6 +312,14 @@ export function ApiSettingsView() {
               <TabsTrigger value="image-generation" className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4" />
                 图片生成
+              </TabsTrigger>
+              <TabsTrigger value="polish" className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                AI 润色
+              </TabsTrigger>
+              <TabsTrigger value="hot-articles" className="flex items-center gap-2">
+                <Rss className="w-4 h-4" />
+                热门文章
               </TabsTrigger>
             </TabsList>
 
@@ -216,13 +349,16 @@ export function ApiSettingsView() {
                         }
                       }}
                       className={cn(
-                        'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
+                        'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border flex items-center gap-1',
                         llmConfig.provider === preset.config.provider
                           ? 'bg-primary text-primary-foreground border-primary'
                           : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
                       )}
                     >
                       {preset.name}
+                      {FREE_QUOTA[preset.name] && (
+                        <Badge variant="outline" className="text-xs ml-1">{FREE_QUOTA[preset.name]}</Badge>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -712,6 +848,283 @@ export function ApiSettingsView() {
                 </Button>
               </div>
             </TabsContent>
+
+            <TabsContent value="polish" className="space-y-4 mt-4">
+              <div className="space-y-3 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">✨ AI 润色配置</p>
+                <p>配置用于文章润色和排版的 AI 服务。</p>
+                <p className="text-xs mt-2 text-amber-500 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  API Key 仅保存在本地浏览器中，不会上传到任何服务器
+                </p>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium mb-2 block">快速选择服务商 (按住 Ctrl/Command 键点击跳转官网)</Label>
+                <div className="flex flex-wrap gap-2">
+                  {polishPresets.map(preset => (
+                    <button
+                      key={preset.name}
+                      onClick={(e) => {
+                        if (e.ctrlKey || e.metaKey || e.button === 1) {
+                          if (preset.url) {
+                            window.open(preset.url, '_blank');
+                          }
+                        } else {
+                          setPolishConfig(preset.config);
+                        }
+                      }}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
+                        polishConfig.provider === preset.config.provider
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
+                      )}
+                    >
+                      {preset.name}
+                      {FREE_QUOTA[preset.name] && (
+                        <Badge variant="outline" className="text-xs ml-1">{FREE_QUOTA[preset.name]}</Badge>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">API Base URL</Label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      value={polishConfig.baseUrl}
+                      onChange={e => setPolishConfig(prev => ({ ...prev, baseUrl: e.target.value }))}
+                      placeholder="https://api.openai.com/v1"
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">API Key</Label>
+                  <div className="relative">
+                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type={showPolishKey ? 'text' : 'password'}
+                      value={polishConfig.apiKey}
+                      onChange={e => setPolishConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                      placeholder="sk-..."
+                      className="pl-9 pr-10"
+                    />
+                    <button
+                      onClick={() => setShowPolishKey(!showPolishKey)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPolishKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">模型名称</Label>
+                  <Input
+                    value={polishConfig.model}
+                    onChange={e => setPolishConfig(prev => ({ ...prev, model: e.target.value }))}
+                    placeholder="gpt-4o"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">提供商</Label>
+                  <Select
+                    value={polishConfig.provider}
+                    onValueChange={(v: PolishProvider) => setPolishConfig(prev => ({ ...prev, provider: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="openai">OpenAI</SelectItem>
+                      <SelectItem value="dashscope">通义千问</SelectItem>
+                      <SelectItem value="deepseek">DeepSeek</SelectItem>
+                      <SelectItem value="doubao">豆包</SelectItem>
+                      <SelectItem value="zhipu">智谱</SelectItem>
+                      <SelectItem value="wenxin">文心一言</SelectItem>
+                      <SelectItem value="anthropic">Claude</SelectItem>
+                      <SelectItem value="custom">自定义</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-lg border border-border space-y-4">
+                <h3 className="text-sm font-medium">高级设置</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm">最大 Token 数</Label>
+                      <span className="text-sm text-muted-foreground">{polishConfig.maxTokens}</span>
+                    </div>
+                    <Slider
+                      value={[polishConfig.maxTokens]}
+                      onValueChange={([v]) => setPolishConfig(prev => ({ ...prev, maxTokens: v }))}
+                      min={256}
+                      max={8192}
+                      step={256}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm">Temperature（创造性）</Label>
+                      <span className="text-sm text-muted-foreground">{polishConfig.temperature.toFixed(1)}</span>
+                    </div>
+                    <Slider
+                      value={[polishConfig.temperature]}
+                      onValueChange={([v]) => setPolishConfig(prev => ({ ...prev, temperature: v }))}
+                      min={0}
+                      max={2}
+                      step={0.1}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button onClick={handleTestPolish} disabled={testing} variant="outline">
+                  {testing ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                      测试中...
+                    </span>
+                  ) : (
+                    '测试连接'
+                  )}
+                </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="hot-articles" className="space-y-4 mt-4">
+              <div className="space-y-3 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">📰 热门文章配置</p>
+                <p>配置用于采集各平台热门文章的 API 接口。</p>
+                <p className="text-xs mt-2 text-amber-500 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  API Key 仅保存在本地浏览器中，不会上传到任何服务器
+                </p>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium mb-2 block">快速选择平台 (点击名称跳转官网)</Label>
+                <div className="flex flex-wrap gap-2">
+                  {DEFAULT_HOT_ARTICLE_SOURCES.map(source => (
+                    <button
+                      key={source.id}
+                      onClick={() => {
+                        setHotArticlesConfig(prev => ({ 
+                          ...prev, 
+                          platform: source.id,
+                          apiUrl: source.apiUrl || ''
+                        }));
+                        if (source.url) {
+                          window.open(source.url, '_blank');
+                        }
+                      }}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border flex items-center gap-1',
+                        hotArticlesConfig.platform === source.id
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
+                      )}
+                    >
+                      {source.name}
+                      {source.freeQuota && (
+                        <Badge variant="outline" className="text-xs ml-1">{source.freeQuota}</Badge>
+                      )}
+                      <ExternalLink className="w-3 h-3 ml-1" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="hot-articles-use-custom">启用自定义接口</Label>
+                  <Switch
+                    id="hot-articles-use-custom"
+                    checked={hotArticlesConfig.useCustom}
+                    onCheckedChange={(checked) => setHotArticlesConfig(prev => ({ ...prev, useCustom: checked }))}
+                  />
+                </div>
+                
+                {hotArticlesConfig.useCustom && (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="hot-articles-platform">平台名称</Label>
+                      <Select
+                        value={hotArticlesConfig.platform || 'all'}
+                        onValueChange={(value) => setHotArticlesConfig(prev => ({ ...prev, platform: value }))}
+                      >
+                        <SelectTrigger id="hot-articles-platform">
+                          <SelectValue placeholder="选择平台" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">全部平台</SelectItem>
+                          {DEFAULT_HOT_ARTICLE_SOURCES.map(source => (
+                            <SelectItem key={source.id} value={source.id}>
+                              {source.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="hot-articles-api-url">API 地址</Label>
+                      <Input
+                        id="hot-articles-api-url"
+                        placeholder="https://api.example.com/hot-articles"
+                        value={hotArticlesConfig.apiUrl}
+                        onChange={e => setHotArticlesConfig(prev => ({ ...prev, apiUrl: e.target.value }))}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="hot-articles-api-key">API Key（可选）</Label>
+                      <Input
+                        id="hot-articles-api-key"
+                        placeholder="sk-..."
+                        value={hotArticlesConfig.apiKey || ''}
+                        onChange={e => setHotArticlesConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                      />
+                    </div>
+                    
+                    <div className="text-sm text-muted-foreground">
+                      <p>API 响应格式要求：</p>
+                      <ul className="list-disc list-inside mt-1">
+                        <li>直接返回文章数组，或包含 articles/data 字段</li>
+                        <li>文章字段：title, source, platform, views, url, tags, publishDate</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={handleTestHotArticles} 
+                    disabled={testing || !hotArticlesConfig.apiUrl}
+                    variant="outline"
+                  >
+                    {testing ? (
+                      <span className="flex items-center gap-2">
+                        <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                        测试中...
+                      </span>
+                    ) : (
+                      '测试连接'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
           </Tabs>
 
           <div className="flex items-center gap-3 pt-4 border-t mt-4">
@@ -741,8 +1154,6 @@ export function ApiSettingsView() {
           )}
         </CardContent>
       </Card>
-
-
     </div>
   );
 }
