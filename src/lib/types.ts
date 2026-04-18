@@ -15,6 +15,9 @@ export type ImageGenerationProvider = 'openai' | 'dashscope' | 'stability' | 'mi
 // AI润色服务提供商类型
 export type PolishProvider = 'openai' | 'dashscope' | 'deepseek' | 'doubao' | 'zhipu' | 'wenxin' | 'anthropic' | 'custom';
 
+// 非AI润色工具类型
+export type NonAiPolishTool = 'grammarly' | 'hemingway' | 'prowritingaid' | 'ginger' | 'manual';
+
 // AI润色配置
 export interface PolishConfig {
   provider: PolishProvider;
@@ -28,6 +31,9 @@ export interface PolishConfig {
 // 排版服务提供商类型
 export type FormatProvider = 'openai' | 'dashscope' | 'deepseek' | 'doubao' | 'zhipu' | 'wenxin' | 'anthropic' | 'custom';
 
+// 非AI排版工具类型
+export type NonAiFormatTool = 'microsoft-word' | 'google-docs' | 'notion' | 'medium' | 'substack' | 'manual';
+
 // 排版配置
 export interface FormatConfig {
   provider: FormatProvider;
@@ -36,6 +42,12 @@ export interface FormatConfig {
   model: string;
   maxTokens: number;
   temperature: number;
+}
+
+// 非AI工具配置
+export interface NonAiToolConfig {
+  polishTools: NonAiPolishTool[];
+  formatTools: NonAiFormatTool[];
 }
 
 // 热门文章来源配置
@@ -103,6 +115,7 @@ export interface AppConfig {
   imageGeneration: ImageGenerationConfig;
   polish: PolishConfig;
   format: FormatConfig;
+  nonAiTools: NonAiToolConfig;
 }
 
 export interface AiDetectionResult {

@@ -24,6 +24,9 @@ import type {
   PolishProvider,
   FormatConfig,
   FormatProvider,
+  NonAiToolConfig, 
+  NonAiPolishTool, 
+  NonAiFormatTool
 } from '@/lib/types';
 import {
   getAppConfig,
@@ -42,6 +45,8 @@ import {
   savePolishConfig,
   getFormatConfig,
   saveFormatConfig,
+  getNonAiToolsConfig,
+  saveNonAiToolsConfig,
   callAiApi,
   DEFAULT_LLM_CONFIGS,
   DEFAULT_AI_DETECTION_CONFIGS,
@@ -51,6 +56,7 @@ import {
   DEFAULT_HOT_ARTICLE_SOURCES,
   DEFAULT_POLISH_CONFIGS,
   DEFAULT_FORMAT_CONFIGS,
+  DEFAULT_NON_AI_TOOLS_CONFIG,
 } from '@/lib/api';
 
 // 平台API文档链接
@@ -83,6 +89,7 @@ export function ApiSettingsView() {
   const [hotArticlesConfig, setHotArticlesConfig] = useState<HotArticlesConfig>(getHotArticlesConfig());
   const [polishConfig, setPolishConfig] = useState<PolishConfig>(getPolishConfig());
   const [formatConfig, setFormatConfig] = useState<FormatConfig>(getFormatConfig());
+  const [nonAiToolsConfig, setNonAiToolsConfig] = useState<NonAiToolConfig>(getNonAiToolsConfig());
   const [showLlmKey, setShowLlmKey] = useState(false);
   const [showAiDetectionKey, setShowAiDetectionKey] = useState(false);
   const [showContentSafetyKey, setShowContentSafetyKey] = useState(false);
@@ -162,9 +169,10 @@ export function ApiSettingsView() {
     saveHotArticlesConfig(hotArticlesConfig);
     savePolishConfig(polishConfig);
     saveFormatConfig(formatConfig);
+    saveNonAiToolsConfig(nonAiToolsConfig);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
-  }, [llmConfig, aiDetectionConfig, contentSafetyConfig, imageGenerationConfig, hotArticlesConfig, polishConfig, formatConfig]);
+  }, [llmConfig, aiDetectionConfig, contentSafetyConfig, imageGenerationConfig, hotArticlesConfig, polishConfig, formatConfig, nonAiToolsConfig]);
 
   const handleTestLlm = useCallback(async () => {
     if (!llmConfig.apiKey) {
@@ -311,7 +319,6 @@ export function ApiSettingsView() {
       setTesting(false);
     }
   }, [hotArticlesConfig]);
-
   return (
     <div className="space-y-4">
       <Card>
@@ -328,7 +335,7 @@ export function ApiSettingsView() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-7">
+            <TabsList className="grid w-full grid-cols-8">
               <TabsTrigger value="llm" className="flex items-center gap-2">
                 <Bot className="w-4 h-4" />
                 大模型
@@ -356,6 +363,10 @@ export function ApiSettingsView() {
               <TabsTrigger value="hot-articles" className="flex items-center gap-2">
                 <Rss className="w-4 h-4" />
                 热门文章
+              </TabsTrigger>
+              <TabsTrigger value="non-ai-tools" className="flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                非AI工具
               </TabsTrigger>
             </TabsList>
 
@@ -888,7 +899,7 @@ export function ApiSettingsView() {
             <TabsContent value="polish" className="space-y-4 mt-4">
               <div className="space-y-3 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
                 <p className="font-medium text-foreground">✨ AI 润色配置</p>
-                <p>配置用于文章润色和排版的 AI 服务。</p>
+                <p>配置用于文章润色、优化等功能的 AI 服务。</p>
                 <p className="text-xs mt-2 text-amber-500 flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" />
                   API Key 仅保存在本地浏览器中，不会上传到任何服务器
@@ -981,11 +992,11 @@ export function ApiSettingsView() {
                     <SelectContent>
                       <SelectItem value="openai">OpenAI</SelectItem>
                       <SelectItem value="dashscope">通义千问</SelectItem>
+                      <SelectItem value="anthropic">Claude</SelectItem>
                       <SelectItem value="deepseek">DeepSeek</SelectItem>
                       <SelectItem value="doubao">豆包</SelectItem>
                       <SelectItem value="zhipu">智谱</SelectItem>
                       <SelectItem value="wenxin">文心一言</SelectItem>
-                      <SelectItem value="anthropic">Claude</SelectItem>
                       <SelectItem value="custom">自定义</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1042,6 +1053,10 @@ export function ApiSettingsView() {
               <div className="space-y-3 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
                 <p className="font-medium text-foreground">📝 排版配置</p>
                 <p>配置用于文章排版、格式化等功能的 AI 服务。</p>
+                <p className="text-xs mt-2 text-amber-500 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  API Key 仅保存在本地浏览器中，不会上传到任何服务器
+                </p>
               </div>
 
               <div>
@@ -1130,11 +1145,11 @@ export function ApiSettingsView() {
                     <SelectContent>
                       <SelectItem value="openai">OpenAI</SelectItem>
                       <SelectItem value="dashscope">通义千问</SelectItem>
+                      <SelectItem value="anthropic">Claude</SelectItem>
                       <SelectItem value="deepseek">DeepSeek</SelectItem>
                       <SelectItem value="doubao">豆包</SelectItem>
                       <SelectItem value="zhipu">智谱</SelectItem>
                       <SelectItem value="wenxin">文心一言</SelectItem>
-                      <SelectItem value="anthropic">Claude</SelectItem>
                       <SelectItem value="custom">自定义</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1307,6 +1322,214 @@ export function ApiSettingsView() {
                       '测试连接'
                     )}
                   </Button>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="non-ai-tools" className="space-y-4 mt-4">
+              <div className="space-y-3 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">🔧 非AI工具配置</p>
+                <p>配置用于润色和排版的非AI工具选项。</p>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-sm font-medium mb-3">润色工具</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.polishTools.includes('grammarly')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          polishTools: e.target.checked
+                            ? [...prev.polishTools, 'grammarly']
+                            : prev.polishTools.filter(tool => tool !== 'grammarly')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">Grammarly</p>
+                        <p className="text-xs text-muted-foreground">语法检查和写作辅助工具</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.polishTools.includes('hemingway')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          polishTools: e.target.checked
+                            ? [...prev.polishTools, 'hemingway']
+                            : prev.polishTools.filter(tool => tool !== 'hemingway')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">Hemingway Editor</p>
+                        <p className="text-xs text-muted-foreground">简洁写作风格分析工具</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.polishTools.includes('prowritingaid')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          polishTools: e.target.checked
+                            ? [...prev.polishTools, 'prowritingaid']
+                            : prev.polishTools.filter(tool => tool !== 'prowritingaid')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">ProWritingAid</p>
+                        <p className="text-xs text-muted-foreground">全面的写作分析工具</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.polishTools.includes('ginger')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          polishTools: e.target.checked
+                            ? [...prev.polishTools, 'ginger']
+                            : prev.polishTools.filter(tool => tool !== 'ginger')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">Ginger</p>
+                        <p className="text-xs text-muted-foreground">语法检查和翻译工具</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.polishTools.includes('manual')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          polishTools: e.target.checked
+                            ? [...prev.polishTools, 'manual']
+                            : prev.polishTools.filter(tool => tool !== 'manual')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">人工润色</p>
+                        <p className="text-xs text-muted-foreground">专业编辑人工审核</p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-medium mb-3">排版工具</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.formatTools.includes('microsoft-word')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          formatTools: e.target.checked
+                            ? [...prev.formatTools, 'microsoft-word']
+                            : prev.formatTools.filter(tool => tool !== 'microsoft-word')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">Microsoft Word</p>
+                        <p className="text-xs text-muted-foreground">专业文档排版工具</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.formatTools.includes('google-docs')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          formatTools: e.target.checked
+                            ? [...prev.formatTools, 'google-docs']
+                            : prev.formatTools.filter(tool => tool !== 'google-docs')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">Google Docs</p>
+                        <p className="text-xs text-muted-foreground">在线文档协作工具</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.formatTools.includes('notion')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          formatTools: e.target.checked
+                            ? [...prev.formatTools, 'notion']
+                            : prev.formatTools.filter(tool => tool !== 'notion')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">Notion</p>
+                        <p className="text-xs text-muted-foreground">一体化工作空间</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.formatTools.includes('medium')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          formatTools: e.target.checked
+                            ? [...prev.formatTools, 'medium']
+                            : prev.formatTools.filter(tool => tool !== 'medium')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">Medium</p>
+                        <p className="text-xs text-muted-foreground">内容发布平台</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.formatTools.includes('substack')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          formatTools: e.target.checked
+                            ? [...prev.formatTools, 'substack']
+                            : prev.formatTools.filter(tool => tool !== 'substack')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">Substack</p>
+                        <p className="text-xs text-muted-foreground">电子邮件通讯平台</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.formatTools.includes('manual')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          formatTools: e.target.checked
+                            ? [...prev.formatTools, 'manual']
+                            : prev.formatTools.filter(tool => tool !== 'manual')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">人工排版</p>
+                        <p className="text-xs text-muted-foreground">专业设计师排版</p>
+                      </div>
+                    </label>
+                  </div>
                 </div>
               </div>
             </TabsContent>

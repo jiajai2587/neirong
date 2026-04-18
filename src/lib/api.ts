@@ -16,6 +16,7 @@ import type {
   PolishProvider,
   FormatConfig,
   FormatProvider,
+  NonAiToolConfig,
 } from './types';
 
 // ==================== 默认配置 ====================
@@ -100,119 +101,6 @@ export const DEFAULT_LLM_CONFIGS: Record<LlmProvider, ApiConfig> = {
     model: 'moonshot-v1-8k',
     maxTokens: 8192,
     temperature: 0.85,
-  },
-};
-
-export const DEFAULT_AI_DETECTION_CONFIGS: Record<AiDetectionProvider, AiDetectionConfig> = {
-  local: {
-    provider: 'local',
-    apiKey: '',
-  },
-  originality: {
-    provider: 'originality',
-    apiKey: '',
-    baseUrl: 'https://api.originality.ai/api/v1',
-  },
-  winston: {
-    provider: 'winston',
-    apiKey: '',
-    baseUrl: 'https://api.gowinston.ai',
-  },
-  copyscape: {
-    provider: 'copyscape',
-    apiKey: '',
-    baseUrl: 'https://www.copyscape.com/api',
-  },
-  gptzero: {
-    provider: 'gptzero',
-    apiKey: '',
-    baseUrl: 'https://api.gptzero.me/v2',
-  },
-  contentatscale: {
-    provider: 'contentatscale',
-    apiKey: '',
-    baseUrl: 'https://api.contentatscale.ai/v1',
-  },
-  scribbr: {
-    provider: 'scribbr',
-    apiKey: '',
-    baseUrl: 'https://api.scribbr.com',
-  },
-  zerogpt: {
-    provider: 'zerogpt',
-    apiKey: '',
-    baseUrl: 'https://api.zerogpt.com/api',
-  },
-};
-
-export const DEFAULT_CONTENT_SAFETY_CONFIGS: Record<ContentSafetyProvider, ContentSafetyConfig> = {
-  local: {
-    provider: 'local',
-  },
-  aliyun: {
-    provider: 'aliyun',
-    accessKeyId: '',
-    accessKeySecret: '',
-    region: 'cn-shanghai',
-  },
-  tencent: {
-    provider: 'tencent',
-    secretId: '',
-    secretKey: '',
-    region: 'ap-guangzhou',
-  },
-  baidu: {
-    provider: 'baidu',
-    apiKey: '',
-    secretKey: '',
-  },
-};
-
-export const DEFAULT_IMAGE_GENERATION_CONFIGS: Record<ImageGenerationProvider, ImageGenerationConfig> = {
-  openai: {
-    provider: 'openai',
-    baseUrl: 'https://api.openai.com/v1',
-    apiKey: '',
-    model: 'dall-e-3',
-    size: '1024x1024',
-    quality: 'standard',
-    style: 'vivid',
-  },
-  dashscope: {
-    provider: 'dashscope',
-    baseUrl: 'https://dashscope.aliyuncs.com/api/v1',
-    apiKey: '',
-    model: 'qwen-vl-plus',
-    size: '1024x1024',
-    quality: 'standard',
-    style: 'vivid',
-  },
-  stability: {
-    provider: 'stability',
-    baseUrl: 'https://api.stability.ai/v1',
-    apiKey: '',
-    model: 'stable-diffusion-xl-1024-v1-0',
-    size: '1024x1024',
-    quality: 'standard',
-    style: 'vivid',
-  },
-  midjourney: {
-    provider: 'midjourney',
-    baseUrl: 'https://api.midjourney.com/v1',
-    apiKey: '',
-    model: 'midjourney-v6',
-    size: '1024x1024',
-    quality: 'standard',
-    style: 'vivid',
-  },
-  custom: {
-    provider: 'custom',
-    baseUrl: 'https://api.example.com/v1',
-    apiKey: '',
-    model: 'custom-model',
-    size: '1024x1024',
-    quality: 'standard',
-    style: 'vivid',
   },
 };
 
@@ -350,6 +238,119 @@ export const DEFAULT_FORMAT_CONFIGS: Record<FormatProvider, FormatConfig> = {
   },
 };
 
+export const DEFAULT_AI_DETECTION_CONFIGS: Record<AiDetectionProvider, AiDetectionConfig> = {
+  local: {
+    provider: 'local',
+    apiKey: '',
+  },
+  originality: {
+    provider: 'originality',
+    apiKey: '',
+    baseUrl: 'https://api.originality.ai/api/v1',
+  },
+  winston: {
+    provider: 'winston',
+    apiKey: '',
+    baseUrl: 'https://api.gowinston.ai',
+  },
+  copyscape: {
+    provider: 'copyscape',
+    apiKey: '',
+    baseUrl: 'https://www.copyscape.com/api',
+  },
+  gptzero: {
+    provider: 'gptzero',
+    apiKey: '',
+    baseUrl: 'https://api.gptzero.me/v2',
+  },
+  contentatscale: {
+    provider: 'contentatscale',
+    apiKey: '',
+    baseUrl: 'https://api.contentatscale.ai/v1',
+  },
+  scribbr: {
+    provider: 'scribbr',
+    apiKey: '',
+    baseUrl: 'https://api.scribbr.com',
+  },
+  zerogpt: {
+    provider: 'zerogpt',
+    apiKey: '',
+    baseUrl: 'https://api.zerogpt.com/api',
+  },
+};
+
+export const DEFAULT_CONTENT_SAFETY_CONFIGS: Record<ContentSafetyProvider, ContentSafetyConfig> = {
+  local: {
+    provider: 'local',
+  },
+  aliyun: {
+    provider: 'aliyun',
+    accessKeyId: '',
+    accessKeySecret: '',
+    region: 'cn-shanghai',
+  },
+  tencent: {
+    provider: 'tencent',
+    secretId: '',
+    secretKey: '',
+    region: 'ap-guangzhou',
+  },
+  baidu: {
+    provider: 'baidu',
+    apiKey: '',
+    secretKey: '',
+  },
+};
+
+export const DEFAULT_IMAGE_GENERATION_CONFIGS: Record<ImageGenerationProvider, ImageGenerationConfig> = {
+  openai: {
+    provider: 'openai',
+    baseUrl: 'https://api.openai.com/v1',
+    apiKey: '',
+    model: 'dall-e-3',
+    size: '1024x1024',
+    quality: 'standard',
+    style: 'vivid',
+  },
+  dashscope: {
+    provider: 'dashscope',
+    baseUrl: 'https://dashscope.aliyuncs.com/api/v1',
+    apiKey: '',
+    model: 'qwen-vl-plus',
+    size: '1024x1024',
+    quality: 'standard',
+    style: 'vivid',
+  },
+  stability: {
+    provider: 'stability',
+    baseUrl: 'https://api.stability.ai/v1',
+    apiKey: '',
+    model: 'stable-diffusion-xl-1024-v1-0',
+    size: '1024x1024',
+    quality: 'standard',
+    style: 'vivid',
+  },
+  midjourney: {
+    provider: 'midjourney',
+    baseUrl: 'https://api.midjourney.com/v1',
+    apiKey: '',
+    model: 'midjourney-v6',
+    size: '1024x1024',
+    quality: 'standard',
+    style: 'vivid',
+  },
+  custom: {
+    provider: 'custom',
+    baseUrl: 'https://api.example.com/v1',
+    apiKey: '',
+    model: 'custom-model',
+    size: '1024x1024',
+    quality: 'standard',
+    style: 'vivid',
+  },
+};
+
 export const DEFAULT_HOT_ARTICLES_CONFIG: HotArticlesConfig = {
   useCustom: false,
   apiUrl: '',
@@ -402,6 +403,12 @@ export const DEFAULT_HOT_ARTICLE_SOURCES: HotArticleSource[] = [
   },
 ];
 
+// 默认非AI工具配置
+export const DEFAULT_NON_AI_TOOLS_CONFIG: NonAiToolConfig = {
+  polishTools: ['grammarly', 'hemingway', 'manual'],
+  formatTools: ['microsoft-word', 'google-docs', 'notion', 'manual'],
+};
+
 export const DEFAULT_APP_CONFIG: AppConfig = {
   llm: DEFAULT_LLM_CONFIGS.dashscope,
   aiDetection: DEFAULT_AI_DETECTION_CONFIGS.local,
@@ -410,6 +417,7 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
   imageGeneration: DEFAULT_IMAGE_GENERATION_CONFIGS.openai,
   polish: DEFAULT_POLISH_CONFIGS.dashscope,
   format: DEFAULT_FORMAT_CONFIGS.dashscope,
+  nonAiTools: DEFAULT_NON_AI_TOOLS_CONFIG,
 };
 
 // ==================== 配置存储 ====================
@@ -495,6 +503,15 @@ export function getFormatConfig(): FormatConfig {
 export function saveFormatConfig(config: Partial<FormatConfig>): void {
   const current = getAppConfig();
   saveAppConfig({ ...current, format: { ...current.format, ...config } });
+}
+
+export function getNonAiToolsConfig(): NonAiToolConfig {
+  return getAppConfig().nonAiTools;
+}
+
+export function saveNonAiToolsConfig(config: Partial<NonAiToolConfig>): void {
+  const current = getAppConfig();
+  saveAppConfig({ ...current, nonAiTools: { ...current.nonAiTools, ...config } });
 }
 
 // 兼容旧版 API 配置
