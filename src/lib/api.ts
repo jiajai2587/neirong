@@ -357,7 +357,7 @@ export function saveApiConfig(config: Partial<ApiConfig>): void {
 // ==================== API 调用 ====================
 
 // 调用 AI API
-export async function callAiApi(prompt: string, config: ApiConfig): Promise<string> {
+export async function callAiApi(prompt: string, systemPrompt: string, config: ApiConfig): Promise<string> {
   // 实际实现需要根据不同的 provider 调用相应的 API
   // 这里返回模拟数据
   return new Promise((resolve) => {

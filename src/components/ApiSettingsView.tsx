@@ -106,6 +106,54 @@ export function ApiSettingsView() {
     setTesting(false);
   }, [llmConfig]);
 
+  const handleTestImageGeneration = useCallback(async () => {
+    if (!imageGenerationConfig.apiKey) {
+      setTestResult({ success: false, message: '请先输入 API Key' });
+      return;
+    }
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const result = await callImageGenerationApi('测试图片生成', { size: '512x512' });
+      setTestResult({ success: true, message: `连接成功！图片 URL：${result}` });
+    } catch (error: any) {
+      setTestResult({ success: false, message: error.message || '连接失败，请检查配置' });
+    }
+    setTesting(false);
+  }, [imageGenerationConfig]);
+
+  const handleTestAiDetection = useCallback(async () => {
+    if (!aiDetectionConfig.apiKey) {
+      setTestResult({ success: false, message: '请先输入 API Key' });
+      return;
+    }
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const result = await callAiDetectionApi('这是一段测试文本，用于检测 AI 内容。');
+      setTestResult({ success: true, message: `连接成功！AI 检测分数：${result.overallScore}%` });
+    } catch (error: any) {
+      setTestResult({ success: false, message: error.message || '连接失败，请检查配置' });
+    }
+    setTesting(false);
+  }, [aiDetectionConfig]);
+
+  const handleTestContentSafety = useCallback(async () => {
+    if (!contentSafetyConfig.apiKey && contentSafetyConfig.provider !== 'local') {
+      setTestResult({ success: false, message: '请先输入 API Key' });
+      return;
+    }
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const result = await callContentSafetyApi('这是一段测试文本，用于检测敏感内容。');
+      setTestResult({ success: true, message: `连接成功！内容安全分数：${result.score}%` });
+    } catch (error: any) {
+      setTestResult({ success: false, message: error.message || '连接失败，请检查配置' });
+    }
+    setTesting(false);
+  }, [contentSafetyConfig]);
+
   return (
     <div className="space-y-4">
       <Card>
@@ -362,6 +410,19 @@ export function ApiSettingsView() {
                   </div>
                 </div>
               )}
+
+              <div className="flex items-center gap-3">
+                <Button onClick={handleTestAiDetection} disabled={testing || aiDetectionConfig.provider === 'local'} variant="outline">
+                  {testing ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                      测试中...
+                    </span>
+                  ) : (
+                    '测试连接'
+                  )}
+                </Button>
+              </div>
             </TabsContent>
 
             <TabsContent value="content-safety" className="space-y-4 mt-4">
@@ -471,6 +532,19 @@ export function ApiSettingsView() {
                   )}
                 </div>
               )}
+
+              <div className="flex items-center gap-3">
+                <Button onClick={handleTestContentSafety} disabled={testing} variant="outline">
+                  {testing ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                      测试中...
+                    </span>
+                  ) : (
+                    '测试连接'
+                  )}
+                </Button>
+              </div>
             </TabsContent>
 
             <TabsContent value="image-generation" className="space-y-4 mt-4">
@@ -622,6 +696,19 @@ export function ApiSettingsView() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button onClick={handleTestImageGeneration} disabled={testing} variant="outline">
+                  {testing ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                      测试中...
+                    </span>
+                  ) : (
+                    '测试连接'
+                  )}
+                </Button>
               </div>
             </TabsContent>
           </Tabs>
