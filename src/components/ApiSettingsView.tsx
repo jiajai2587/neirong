@@ -8,9 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Settings, Key, Globe, Save, Check, AlertTriangle, TestTube, Eye, EyeOff, MessageCircle, Bot, Shield, ScanFace, ExternalLink } from 'lucide-react';
+import { Settings, Key, Globe, Save, Check, AlertTriangle, TestTube, Eye, EyeOff, MessageCircle, Bot, Shield, ScanFace, ExternalLink, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ApiConfig, AiDetectionConfig, ContentSafetyConfig, LlmProvider, AiDetectionProvider, ContentSafetyProvider, ImageGenerationConfig, ImageGenerationProvider } from '@/lib/types';
+import type { ApiConfig, AiDetectionConfig, ContentSafetyConfig, LlmProvider, AiDetectionProvider, ContentSafetyProvider, ImageGenerationConfig, ImageGenerationProvider, PolishConfig, PolishProvider, FormatConfig, FormatProvider, NonAiToolConfig, NonAiPolishTool, NonAiFormatTool } from '@/lib/types';
 import {
   getAppConfig,
   saveAppConfig,
@@ -22,11 +22,20 @@ import {
   saveContentSafetyConfig,
   getImageGenerationConfig,
   saveImageGenerationConfig,
+  getPolishConfig,
+  savePolishConfig,
+  getFormatConfig,
+  saveFormatConfig,
+  getNonAiToolsConfig,
+  saveNonAiToolsConfig,
   callAiApi,
   DEFAULT_LLM_CONFIGS,
   DEFAULT_AI_DETECTION_CONFIGS,
   DEFAULT_CONTENT_SAFETY_CONFIGS,
   DEFAULT_IMAGE_GENERATION_CONFIGS,
+  DEFAULT_POLISH_CONFIGS,
+  DEFAULT_FORMAT_CONFIGS,
+  DEFAULT_NON_AI_TOOLS_CONFIG,
 } from '@/lib/api';
 
 export function ApiSettingsView() {
@@ -35,10 +44,15 @@ export function ApiSettingsView() {
   const [aiDetectionConfig, setAiDetectionConfig] = useState<AiDetectionConfig>(getAiDetectionConfig());
   const [contentSafetyConfig, setContentSafetyConfig] = useState<ContentSafetyConfig>(getContentSafetyConfig());
   const [imageGenerationConfig, setImageGenerationConfig] = useState<ImageGenerationConfig>(getImageGenerationConfig());
+  const [polishConfig, setPolishConfig] = useState<PolishConfig>(getPolishConfig());
+  const [formatConfig, setFormatConfig] = useState<FormatConfig>(getFormatConfig());
+  const [nonAiToolsConfig, setNonAiToolsConfig] = useState<NonAiToolConfig>(getNonAiToolsConfig());
   const [showLlmKey, setShowLlmKey] = useState(false);
   const [showAiDetectionKey, setShowAiDetectionKey] = useState(false);
   const [showContentSafetyKey, setShowContentSafetyKey] = useState(false);
   const [showImageGenerationKey, setShowImageGenerationKey] = useState(false);
+  const [showPolishKey, setShowPolishKey] = useState(false);
+  const [showFormatKey, setShowFormatKey] = useState(false);
   const [saved, setSaved] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -82,14 +96,39 @@ export function ApiSettingsView() {
     { name: '自定义', config: DEFAULT_IMAGE_GENERATION_CONFIGS.custom, url: '' },
   ];
 
+  const polishPresets: Array<{ name: string; config: PolishConfig; url: string }> = [
+    { name: '通义千问', config: DEFAULT_POLISH_CONFIGS.dashscope, url: 'https://dashscope.console.aliyun.com/' },
+    { name: 'OpenAI', config: DEFAULT_POLISH_CONFIGS.openai, url: 'https://platform.openai.com/' },
+    { name: 'Claude', config: DEFAULT_POLISH_CONFIGS.anthropic, url: 'https://console.anthropic.com/' },
+    { name: 'DeepSeek', config: DEFAULT_POLISH_CONFIGS.deepseek, url: 'https://platform.deepseek.com/' },
+    { name: '豆包', config: DEFAULT_POLISH_CONFIGS.doubao, url: 'https://console.volcengine.com/ark/' },
+    { name: '智谱', config: DEFAULT_POLISH_CONFIGS.zhipu, url: 'https://open.bigmodel.cn/' },
+    { name: '文心一言', config: DEFAULT_POLISH_CONFIGS.wenxin, url: 'https://cloud.baidu.com/product/wenxinworkshop' },
+    { name: '自定义', config: DEFAULT_POLISH_CONFIGS.custom, url: '' },
+  ];
+
+  const formatPresets: Array<{ name: string; config: FormatConfig; url: string }> = [
+    { name: '通义千问', config: DEFAULT_FORMAT_CONFIGS.dashscope, url: 'https://dashscope.console.aliyun.com/' },
+    { name: 'OpenAI', config: DEFAULT_FORMAT_CONFIGS.openai, url: 'https://platform.openai.com/' },
+    { name: 'Claude', config: DEFAULT_FORMAT_CONFIGS.anthropic, url: 'https://console.anthropic.com/' },
+    { name: 'DeepSeek', config: DEFAULT_FORMAT_CONFIGS.deepseek, url: 'https://platform.deepseek.com/' },
+    { name: '豆包', config: DEFAULT_FORMAT_CONFIGS.doubao, url: 'https://console.volcengine.com/ark/' },
+    { name: '智谱', config: DEFAULT_FORMAT_CONFIGS.zhipu, url: 'https://open.bigmodel.cn/' },
+    { name: '文心一言', config: DEFAULT_FORMAT_CONFIGS.wenxin, url: 'https://cloud.baidu.com/product/wenxinworkshop' },
+    { name: '自定义', config: DEFAULT_FORMAT_CONFIGS.custom, url: '' },
+  ];
+
   const handleSave = useCallback(() => {
     saveLlmConfig(llmConfig);
     saveAiDetectionConfig(aiDetectionConfig);
     saveContentSafetyConfig(contentSafetyConfig);
     saveImageGenerationConfig(imageGenerationConfig);
+    savePolishConfig(polishConfig);
+    saveFormatConfig(formatConfig);
+    saveNonAiToolsConfig(nonAiToolsConfig);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
-  }, [llmConfig, aiDetectionConfig, contentSafetyConfig, imageGenerationConfig]);
+  }, [llmConfig, aiDetectionConfig, contentSafetyConfig, imageGenerationConfig, polishConfig, formatConfig, nonAiToolsConfig]);
 
   const handleTestLlm = useCallback(async () => {
     if (!llmConfig.apiKey) {
@@ -155,6 +194,38 @@ export function ApiSettingsView() {
     setTesting(false);
   }, [contentSafetyConfig]);
 
+  const handleTestPolish = useCallback(async () => {
+    if (!polishConfig.apiKey) {
+      setTestResult({ success: false, message: '请先输入 API Key' });
+      return;
+    }
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const result = await callAiApi('你好，请润色这句话', '你是一个润色助手。', polishConfig);
+      setTestResult({ success: true, message: `连接成功！` });
+    } catch (error: any) {
+      setTestResult({ success: false, message: error.message || '连接失败，请检查配置' });
+    }
+    setTesting(false);
+  }, [polishConfig]);
+
+  const handleTestFormat = useCallback(async () => {
+    if (!formatConfig.apiKey) {
+      setTestResult({ success: false, message: '请先输入 API Key' });
+      return;
+    }
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const result = await callAiApi('你好，请排版这句话', '你是一个排版助手。', formatConfig);
+      setTestResult({ success: true, message: `连接成功！` });
+    } catch (error: any) {
+      setTestResult({ success: false, message: error.message || '连接失败，请检查配置' });
+    }
+    setTesting(false);
+  }, [formatConfig]);
+
   return (
     <div className="space-y-4">
       <Card>
@@ -171,7 +242,7 @@ export function ApiSettingsView() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="llm" className="flex items-center gap-2">
                 <Bot className="w-4 h-4" />
                 大模型
@@ -187,6 +258,18 @@ export function ApiSettingsView() {
               <TabsTrigger value="image-generation" className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4" />
                 图片生成
+              </TabsTrigger>
+              <TabsTrigger value="polish" className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                AI 润色
+              </TabsTrigger>
+              <TabsTrigger value="format" className="flex items-center gap-2">
+                <MessageCircle className="w-4 h-4" />
+                排版
+              </TabsTrigger>
+              <TabsTrigger value="non-ai-tools" className="flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                非AI工具
               </TabsTrigger>
             </TabsList>
 
@@ -710,6 +793,492 @@ export function ApiSettingsView() {
                     '测试连接'
                   )}
                 </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="polish" className="space-y-4 mt-4">
+              <div className="space-y-3 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">✨ AI 润色配置</p>
+                <p>配置用于文章润色、优化等功能的 AI 服务。</p>
+                <p className="text-xs mt-2 text-amber-500 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  API Key 仅保存在本地浏览器中，不会上传到任何服务器
+                </p>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium mb-2 block">快速选择服务商 (按住 Ctrl/Command 键点击跳转官网)</Label>
+                <div className="flex flex-wrap gap-2">
+                  {polishPresets.map(preset => (
+                    <button
+                      key={preset.name}
+                      onClick={(e) => {
+                        if (e.ctrlKey || e.metaKey || e.button === 1) {
+                          if (preset.url) {
+                            window.open(preset.url, '_blank');
+                          }
+                        } else {
+                          setPolishConfig(preset.config);
+                        }
+                      }}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
+                        polishConfig.provider === preset.config.provider
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
+                      )}
+                    >
+                      {preset.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">API Base URL</Label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      value={polishConfig.baseUrl}
+                      onChange={e => setPolishConfig(prev => ({ ...prev, baseUrl: e.target.value }))}
+                      placeholder="https://api.openai.com/v1"
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">API Key</Label>
+                  <div className="relative">
+                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type={showPolishKey ? 'text' : 'password'}
+                      value={polishConfig.apiKey}
+                      onChange={e => setPolishConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                      placeholder="sk-..."
+                      className="pl-9 pr-10"
+                    />
+                    <button
+                      onClick={() => setShowPolishKey(!showPolishKey)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPolishKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">模型名称</Label>
+                  <Input
+                    value={polishConfig.model}
+                    onChange={e => setPolishConfig(prev => ({ ...prev, model: e.target.value }))}
+                    placeholder="gpt-4o"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">提供商</Label>
+                  <Select
+                    value={polishConfig.provider}
+                    onValueChange={(v: PolishProvider) => setPolishConfig(prev => ({ ...prev, provider: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="openai">OpenAI</SelectItem>
+                      <SelectItem value="dashscope">通义千问</SelectItem>
+                      <SelectItem value="anthropic">Claude</SelectItem>
+                      <SelectItem value="deepseek">DeepSeek</SelectItem>
+                      <SelectItem value="doubao">豆包</SelectItem>
+                      <SelectItem value="zhipu">智谱</SelectItem>
+                      <SelectItem value="wenxin">文心一言</SelectItem>
+                      <SelectItem value="custom">自定义</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">最大 Token 数</Label>
+                  <Input
+                    type="number"
+                    value={polishConfig.maxTokens}
+                    onChange={e => setPolishConfig(prev => ({ ...prev, maxTokens: parseInt(e.target.value) || 0 }))}
+                    placeholder="8192"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Temperature（创造性）</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={polishConfig.temperature}
+                    onChange={e => setPolishConfig(prev => ({ ...prev, temperature: parseFloat(e.target.value) || 0 }))}
+                    placeholder="0.7"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button onClick={handleTestPolish} disabled={testing} variant="outline">
+                  {testing ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                      测试中...
+                    </span>
+                  ) : (
+                    '测试连接'
+                  )}
+                </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="format" className="space-y-4 mt-4">
+              <div className="space-y-3 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">📝 排版配置</p>
+                <p>配置用于文章排版、格式化等功能的 AI 服务。</p>
+                <p className="text-xs mt-2 text-amber-500 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  API Key 仅保存在本地浏览器中，不会上传到任何服务器
+                </p>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium mb-2 block">快速选择服务商 (按住 Ctrl/Command 键点击跳转官网)</Label>
+                <div className="flex flex-wrap gap-2">
+                  {formatPresets.map(preset => (
+                    <button
+                      key={preset.name}
+                      onClick={(e) => {
+                        if (e.ctrlKey || e.metaKey || e.button === 1) {
+                          if (preset.url) {
+                            window.open(preset.url, '_blank');
+                          }
+                        } else {
+                          setFormatConfig(preset.config);
+                        }
+                      }}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
+                        formatConfig.provider === preset.config.provider
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
+                      )}
+                    >
+                      {preset.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">API Base URL</Label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      value={formatConfig.baseUrl}
+                      onChange={e => setFormatConfig(prev => ({ ...prev, baseUrl: e.target.value }))}
+                      placeholder="https://api.openai.com/v1"
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">API Key</Label>
+                  <div className="relative">
+                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type={showFormatKey ? 'text' : 'password'}
+                      value={formatConfig.apiKey}
+                      onChange={e => setFormatConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                      placeholder="sk-..."
+                      className="pl-9 pr-10"
+                    />
+                    <button
+                      onClick={() => setShowFormatKey(!showFormatKey)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showFormatKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">模型名称</Label>
+                  <Input
+                    value={formatConfig.model}
+                    onChange={e => setFormatConfig(prev => ({ ...prev, model: e.target.value }))}
+                    placeholder="gpt-4o"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">提供商</Label>
+                  <Select
+                    value={formatConfig.provider}
+                    onValueChange={(v: FormatProvider) => setFormatConfig(prev => ({ ...prev, provider: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="openai">OpenAI</SelectItem>
+                      <SelectItem value="dashscope">通义千问</SelectItem>
+                      <SelectItem value="anthropic">Claude</SelectItem>
+                      <SelectItem value="deepseek">DeepSeek</SelectItem>
+                      <SelectItem value="doubao">豆包</SelectItem>
+                      <SelectItem value="zhipu">智谱</SelectItem>
+                      <SelectItem value="wenxin">文心一言</SelectItem>
+                      <SelectItem value="custom">自定义</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">最大 Token 数</Label>
+                  <Input
+                    type="number"
+                    value={formatConfig.maxTokens}
+                    onChange={e => setFormatConfig(prev => ({ ...prev, maxTokens: parseInt(e.target.value) || 0 }))}
+                    placeholder="8192"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Temperature（创造性）</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={formatConfig.temperature}
+                    onChange={e => setFormatConfig(prev => ({ ...prev, temperature: parseFloat(e.target.value) || 0 }))}
+                    placeholder="0.7"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button onClick={handleTestFormat} disabled={testing} variant="outline">
+                  {testing ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                      测试中...
+                    </span>
+                  ) : (
+                    '测试连接'
+                  )}
+                </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="non-ai-tools" className="space-y-4 mt-4">
+              <div className="space-y-3 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">🔧 非AI工具配置</p>
+                <p>配置用于润色和排版的非AI工具选项。</p>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-sm font-medium mb-3">润色工具</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.polishTools.includes('grammarly')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          polishTools: e.target.checked
+                            ? [...prev.polishTools, 'grammarly']
+                            : prev.polishTools.filter(tool => tool !== 'grammarly')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">Grammarly</p>
+                        <p className="text-xs text-muted-foreground">语法检查和写作辅助工具</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.polishTools.includes('hemingway')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          polishTools: e.target.checked
+                            ? [...prev.polishTools, 'hemingway']
+                            : prev.polishTools.filter(tool => tool !== 'hemingway')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">Hemingway Editor</p>
+                        <p className="text-xs text-muted-foreground">简洁写作风格分析工具</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.polishTools.includes('prowritingaid')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          polishTools: e.target.checked
+                            ? [...prev.polishTools, 'prowritingaid']
+                            : prev.polishTools.filter(tool => tool !== 'prowritingaid')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">ProWritingAid</p>
+                        <p className="text-xs text-muted-foreground">全面的写作分析工具</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.polishTools.includes('ginger')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          polishTools: e.target.checked
+                            ? [...prev.polishTools, 'ginger']
+                            : prev.polishTools.filter(tool => tool !== 'ginger')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">Ginger</p>
+                        <p className="text-xs text-muted-foreground">语法检查和翻译工具</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.polishTools.includes('manual')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          polishTools: e.target.checked
+                            ? [...prev.polishTools, 'manual']
+                            : prev.polishTools.filter(tool => tool !== 'manual')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">人工润色</p>
+                        <p className="text-xs text-muted-foreground">专业编辑人工审核</p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-medium mb-3">排版工具</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.formatTools.includes('microsoft-word')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          formatTools: e.target.checked
+                            ? [...prev.formatTools, 'microsoft-word']
+                            : prev.formatTools.filter(tool => tool !== 'microsoft-word')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">Microsoft Word</p>
+                        <p className="text-xs text-muted-foreground">专业文档排版工具</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.formatTools.includes('google-docs')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          formatTools: e.target.checked
+                            ? [...prev.formatTools, 'google-docs']
+                            : prev.formatTools.filter(tool => tool !== 'google-docs')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">Google Docs</p>
+                        <p className="text-xs text-muted-foreground">在线文档协作工具</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.formatTools.includes('notion')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          formatTools: e.target.checked
+                            ? [...prev.formatTools, 'notion']
+                            : prev.formatTools.filter(tool => tool !== 'notion')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">Notion</p>
+                        <p className="text-xs text-muted-foreground">一体化工作空间</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.formatTools.includes('medium')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          formatTools: e.target.checked
+                            ? [...prev.formatTools, 'medium']
+                            : prev.formatTools.filter(tool => tool !== 'medium')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">Medium</p>
+                        <p className="text-xs text-muted-foreground">内容发布平台</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.formatTools.includes('substack')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          formatTools: e.target.checked
+                            ? [...prev.formatTools, 'substack']
+                            : prev.formatTools.filter(tool => tool !== 'substack')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">Substack</p>
+                        <p className="text-xs text-muted-foreground">电子邮件通讯平台</p>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={nonAiToolsConfig.formatTools.includes('manual')}
+                        onChange={(e) => setNonAiToolsConfig(prev => ({
+                          ...prev,
+                          formatTools: e.target.checked
+                            ? [...prev.formatTools, 'manual']
+                            : prev.formatTools.filter(tool => tool !== 'manual')
+                        }))}
+                        className="w-4 h-4"
+                      />
+                      <div>
+                        <p className="font-medium text-sm">人工排版</p>
+                        <p className="text-xs text-muted-foreground">专业设计师排版</p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
               </div>
             </TabsContent>
           </Tabs>

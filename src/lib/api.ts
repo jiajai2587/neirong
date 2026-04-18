@@ -12,6 +12,11 @@ import type {
   ImageGenerationConfig,
   ImageGenerationProvider,
   HotArticleSource,
+  PolishConfig,
+  PolishProvider,
+  FormatConfig,
+  FormatProvider,
+  NonAiToolConfig,
 } from './types';
 
 // ==================== 默认配置 ====================
@@ -96,6 +101,140 @@ export const DEFAULT_LLM_CONFIGS: Record<LlmProvider, ApiConfig> = {
     model: 'moonshot-v1-8k',
     maxTokens: 8192,
     temperature: 0.85,
+  },
+};
+
+export const DEFAULT_POLISH_CONFIGS: Record<PolishProvider, PolishConfig> = {
+  openai: {
+    provider: 'openai',
+    baseUrl: 'https://api.openai.com/v1',
+    apiKey: '',
+    model: 'gpt-4o',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  dashscope: {
+    provider: 'dashscope',
+    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    apiKey: '',
+    model: 'qwen-turbo',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  deepseek: {
+    provider: 'deepseek',
+    baseUrl: 'https://api.deepseek.com/v1',
+    apiKey: '',
+    model: 'deepseek-chat',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  doubao: {
+    provider: 'doubao',
+    baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
+    apiKey: '',
+    model: 'ep-20241203163449-j7x68',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  zhipu: {
+    provider: 'zhipu',
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+    apiKey: '',
+    model: 'glm-4-flash',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  wenxin: {
+    provider: 'wenxin',
+    baseUrl: 'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat',
+    apiKey: '',
+    model: 'ernie-4.0-turbo-8k',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  anthropic: {
+    provider: 'anthropic',
+    baseUrl: 'https://api.anthropic.com/v1',
+    apiKey: '',
+    model: 'claude-3-5-sonnet-20241022',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  custom: {
+    provider: 'custom',
+    baseUrl: 'https://api.example.com/v1',
+    apiKey: '',
+    model: 'custom-model',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+};
+
+export const DEFAULT_FORMAT_CONFIGS: Record<FormatProvider, FormatConfig> = {
+  openai: {
+    provider: 'openai',
+    baseUrl: 'https://api.openai.com/v1',
+    apiKey: '',
+    model: 'gpt-4o',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  dashscope: {
+    provider: 'dashscope',
+    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    apiKey: '',
+    model: 'qwen-turbo',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  deepseek: {
+    provider: 'deepseek',
+    baseUrl: 'https://api.deepseek.com/v1',
+    apiKey: '',
+    model: 'deepseek-chat',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  doubao: {
+    provider: 'doubao',
+    baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
+    apiKey: '',
+    model: 'ep-20241203163449-j7x68',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  zhipu: {
+    provider: 'zhipu',
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+    apiKey: '',
+    model: 'glm-4-flash',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  wenxin: {
+    provider: 'wenxin',
+    baseUrl: 'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat',
+    apiKey: '',
+    model: 'ernie-4.0-turbo-8k',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  anthropic: {
+    provider: 'anthropic',
+    baseUrl: 'https://api.anthropic.com/v1',
+    apiKey: '',
+    model: 'claude-3-5-sonnet-20241022',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  custom: {
+    provider: 'custom',
+    baseUrl: 'https://api.example.com/v1',
+    apiKey: '',
+    model: 'custom-model',
+    maxTokens: 8192,
+    temperature: 0.7,
   },
 };
 
@@ -270,12 +409,21 @@ export const DEFAULT_HOT_ARTICLE_SOURCES: HotArticleSource[] = [
   },
 ];
 
+// 默认非AI工具配置
+export const DEFAULT_NON_AI_TOOLS_CONFIG: NonAiToolConfig = {
+  polishTools: ['grammarly', 'hemingway', 'manual'],
+  formatTools: ['microsoft-word', 'google-docs', 'notion', 'manual'],
+};
+
 export const DEFAULT_APP_CONFIG: AppConfig = {
   llm: DEFAULT_LLM_CONFIGS.dashscope,
   aiDetection: DEFAULT_AI_DETECTION_CONFIGS.local,
   contentSafety: DEFAULT_CONTENT_SAFETY_CONFIGS.local,
   hotArticles: DEFAULT_HOT_ARTICLES_CONFIG,
   imageGeneration: DEFAULT_IMAGE_GENERATION_CONFIGS.openai,
+  polish: DEFAULT_POLISH_CONFIGS.dashscope,
+  format: DEFAULT_FORMAT_CONFIGS.dashscope,
+  nonAiTools: DEFAULT_NON_AI_TOOLS_CONFIG,
 };
 
 // ==================== 配置存储 ====================
@@ -343,6 +491,33 @@ export function getImageGenerationConfig(): ImageGenerationConfig {
 export function saveImageGenerationConfig(config: Partial<ImageGenerationConfig>): void {
   const current = getAppConfig();
   saveAppConfig({ ...current, imageGeneration: { ...current.imageGeneration, ...config } });
+}
+
+export function getPolishConfig(): PolishConfig {
+  return getAppConfig().polish;
+}
+
+export function savePolishConfig(config: Partial<PolishConfig>): void {
+  const current = getAppConfig();
+  saveAppConfig({ ...current, polish: { ...current.polish, ...config } });
+}
+
+export function getFormatConfig(): FormatConfig {
+  return getAppConfig().format;
+}
+
+export function saveFormatConfig(config: Partial<FormatConfig>): void {
+  const current = getAppConfig();
+  saveAppConfig({ ...current, format: { ...current.format, ...config } });
+}
+
+export function getNonAiToolsConfig(): NonAiToolConfig {
+  return getAppConfig().nonAiTools;
+}
+
+export function saveNonAiToolsConfig(config: Partial<NonAiToolConfig>): void {
+  const current = getAppConfig();
+  saveAppConfig({ ...current, nonAiTools: { ...current.nonAiTools, ...config } });
 }
 
 // 兼容旧版 API 配置

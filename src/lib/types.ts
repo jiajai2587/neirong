@@ -23,6 +23,44 @@ export interface ImageGenerationConfig {
   style: string;
 }
 
+// AI润色服务提供商类型
+export type PolishProvider = 'openai' | 'dashscope' | 'deepseek' | 'doubao' | 'zhipu' | 'wenxin' | 'anthropic' | 'custom';
+
+// 非AI润色工具类型
+export type NonAiPolishTool = 'grammarly' | 'hemingway' | 'prowritingaid' | 'ginger' | 'manual';
+
+// AI润色配置
+export interface PolishConfig {
+  provider: PolishProvider;
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+  maxTokens: number;
+  temperature: number;
+}
+
+// 排版服务提供商类型
+export type FormatProvider = 'openai' | 'dashscope' | 'deepseek' | 'doubao' | 'zhipu' | 'wenxin' | 'anthropic' | 'custom';
+
+// 非AI排版工具类型
+export type NonAiFormatTool = 'microsoft-word' | 'google-docs' | 'notion' | 'medium' | 'substack' | 'manual';
+
+// 排版配置
+export interface FormatConfig {
+  provider: FormatProvider;
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+  maxTokens: number;
+  temperature: number;
+}
+
+// 非AI工具配置
+export interface NonAiToolConfig {
+  polishTools: NonAiPolishTool[];
+  formatTools: NonAiFormatTool[];
+}
+
 export interface ApiConfig {
   provider: LlmProvider;
   baseUrl: string;
@@ -65,6 +103,9 @@ export interface AppConfig {
   contentSafety: ContentSafetyConfig;
   hotArticles: HotArticlesConfig;
   imageGeneration: ImageGenerationConfig;
+  polish: PolishConfig;
+  format: FormatConfig;
+  nonAiTools: NonAiToolConfig;
 }
 
 export interface AiDetectionResult {
