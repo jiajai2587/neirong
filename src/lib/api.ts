@@ -273,6 +273,7 @@ export const DEFAULT_HOT_ARTICLES_CONFIG: HotArticlesConfig = {
   useCustom: false,
   apiUrl: '',
   apiKey: '',
+  platform: 'all',
 };
 
 export const DEFAULT_POLISH_CONFIGS: Record<PolishProvider, PolishConfig> = {
