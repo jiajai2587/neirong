@@ -5,7 +5,8 @@ import { Separator } from '@/components/ui/separator';
 import {
   BookOpen, FileText, Brain, Search, TrendingUp, FileCheck,
   AlertTriangle, Megaphone, Sparkles, Rss, Settings, ChevronRight,
-  Lightbulb, CheckCircle2, ArrowRight, Mail, MessageCircle, Check
+  Lightbulb, CheckCircle2, ArrowRight, Mail, MessageCircle, Check,
+  Image, Palette, Zap, ExternalLink, Code
 } from 'lucide-react';
 
 export function ManualView() {
@@ -23,6 +24,7 @@ export function ManualView() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {[
                 { icon: <FileText className="w-4 h-4" />, label: '内容编辑' },
+                { icon: <Sparkles className="w-4 h-4" />, label: 'AI 生成文章' },
                 { icon: <Brain className="w-4 h-4" />, label: 'AI 检测' },
                 { icon: <Search className="w-4 h-4" />, label: '同质化查询' },
                 { icon: <TrendingUp className="w-4 h-4" />, label: '流量预测' },
@@ -30,7 +32,9 @@ export function ManualView() {
                 { icon: <AlertTriangle className="w-4 h-4" />, label: '敏感词检测' },
                 { icon: <Megaphone className="w-4 h-4" />, label: '营销文检测' },
                 { icon: <Sparkles className="w-4 h-4" />, label: 'AI 润色' },
+                { icon: <Image className="w-4 h-4" />, label: '图片生成' },
                 { icon: <Rss className="w-4 h-4" />, label: '热门文章' },
+                { icon: <Settings className="w-4 h-4" />, label: 'API 接口设置' },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-xs">
                   {item.icon}
@@ -44,71 +48,134 @@ export function ManualView() {
                 <strong>提示</strong>：点击左侧菜单栏底部的 🌙/☀️ 图标可以切换暗色/明亮主题
               </p>
             </div>
-          </div>
+        </div>
       ),
     },
     {
       id: 'step1',
-      title: '第一步：内容编辑',
+      title: '第一步：内容编辑（Markdown 编辑器）',
       icon: <FileText className="w-5 h-5 text-blue-500" />,
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed">
-            <strong>目的</strong>：在编辑器中撰写或粘贴你的自媒体文章内容。
+            <strong>目的</strong>：在编辑器中撰写或粘贴你的自媒体文章内容，支持 Markdown 格式。
           </p>
           <div className="space-y-3">
             <h4 className="text-sm font-medium flex items-center gap-2">
               <Badge variant="outline" className="text-xs">1</Badge>
-              输入文章标题
+              Markdown 编辑器
             </h4>
             <p className="text-sm text-muted-foreground ml-6">
-              在"文章标题"输入框中输入你的文章标题。标题是吸引读者的第一要素，建议包含关键词和吸引力元素。
-            </p>
-
-            <h4 className="text-sm font-medium flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">2</Badge>
-              选择目标平台
-            </h4>
-            <p className="text-sm text-muted-foreground ml-6">
-              在右上角的下拉菜单中选择你要发布的平台（微信公众号、今日头条、知乎等）。
-              不同平台有不同的内容偏好，选择后检测会更有针对性。
-            </p>
-
-            <h4 className="text-sm font-medium flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">3</Badge>
-              撰写或粘贴内容
-            </h4>
-            <p className="text-sm text-muted-foreground ml-6">
-              在文本区域中输入或粘贴你的文章内容。你也可以：
+              全新升级的编辑器，支持：
             </p>
             <ul className="list-disc list-inside space-y-1 ml-8 text-sm text-muted-foreground">
-              <li>使用工具栏进行格式编辑（加粗、斜体、标题、列表等）</li>
-              <li>点击"导入"按钮从本地文件导入 .txt 或 .md 文件</li>
-              <li>点击"导出"按钮将内容导出为 Markdown 文件</li>
-              <li>实时查看字数、段落数、句子数统计</li>
+              <li>完整的 Markdown 工具栏（标题、加粗、斜体、列表、引用、代码、链接、图片等）</li>
+              <li>编辑/预览双视图模式</li>
+              <li>实时预览 Markdown 渲染效果</li>
             </ul>
 
             <h4 className="text-sm font-medium flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">4</Badge>
-              保存内容
+              <Badge variant="outline" className="text-xs">2</Badge>
+              工具栏按钮说明
+            </h4>
+            <div className="ml-6 grid grid-cols-2 md:grid-cols-4 gap-2">
+              {[
+                { icon: 'H1', desc: '一级标题' },
+                { icon: 'H2', desc: '二级标题' },
+                { icon: 'H3', desc: '三级标题' },
+                { icon: 'B', desc: '加粗' },
+                { icon: 'I', desc: '斜体' },
+                { icon: '"', desc: '引用' },
+                { icon: '•', desc: '无序列表' },
+                { icon: '1.', desc: '有序列表' },
+                { icon: '`', desc: '代码' },
+                { icon: '[]', desc: '链接' },
+                { icon: '![]', desc: '图片' },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-2 p-2 bg-muted/30 rounded text-xs">
+                  <span className="w-6 h-6 rounded bg-muted flex items-center justify-center font-bold">{item.icon}</span>
+                  <span>{item.desc}</span>
+                </div>
+              ))}
+            </div>
+
+            <h4 className="text-sm font-medium flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">3</Badge>
+              其他功能
+            </h4>
+            <ul className="list-disc list-inside space-y-1 ml-8 text-sm text-muted-foreground">
+              <li><strong>实时预览</strong>：切换到"预览"标签页查看 Markdown 渲染效果</li>
+              <li><strong>导入/导出</strong>：支持导入 .txt/.md 文件，导出为 Markdown 文件</li>
+              <li><strong>实时统计</strong>：字数、段落数、句子数实时统计</li>
+              <li><strong>自动保存</strong>：内容自动保存在浏览器中</li>
+            </ul>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'generate',
+      title: '第二步：AI 生成文章',
+      icon: <Sparkles className="w-5 h-5 text-violet-500" />,
+      content: (
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed">
+            <strong>目的</strong>：输入主题，AI 自动为你创作高质量自媒体文章，还可以生成配图。
+          </p>
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">1</Badge>
+              配置文章参数
+            </h4>
+            <ul className="list-disc list-inside space-y-1 ml-8 text-sm text-muted-foreground">
+              <li><strong>文章主题</strong>：输入你想写的主题（必填）</li>
+              <li><strong>目标平台</strong>：选择发布平台（微信公众号、今日头条、知乎等）</li>
+              <li><strong>文章风格</strong>：选择文章风格（干货教程、观点评论、新闻资讯等）</li>
+              <li><strong>目标字数</strong>：用滑块调整文章字数（500-3000字）</li>
+              <li><strong>快捷主题</strong>：点击快捷主题按钮快速填入热门话题</li>
+            </ul>
+
+            <h4 className="text-sm font-medium flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">2</Badge>
+              生成文章配图
             </h4>
             <p className="text-sm text-muted-foreground ml-6">
-              内容会自动保存在浏览器中，下次打开时会自动恢复。你也可以使用导出功能备份。
+              文章生成后，会自动生成图片提示词，你可以：
             </p>
-          </div>
+            <ul className="list-disc list-inside space-y-1 ml-8 text-sm text-muted-foreground">
+              <li>使用自动生成的提示词，或手动修改</li>
+              <li>选择图片尺寸（512x512、1024x1024、1024x1792、1792x1024）</li>
+              <li>点击"生成图片"生成配图</li>
+              <li>生成后可以下载图片</li>
+            </ul>
 
-          <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
-            <p className="text-sm flex items-center gap-2 text-blue-600 dark:text-blue-400">
-              <Lightbulb className="w-4 h-4" />
-              <strong>提示</strong>：建议内容至少 200 字以上，检测结果会更准确。
-            </p>
+            <h4 className="text-sm font-medium flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">3</Badge>
+              图片生成服务商
+            </h4>
+            <div className="ml-6 grid grid-cols-2 gap-2">
+              {[
+                { name: '通义千问（万相）', free: true },
+                { name: '豆包', free: true },
+                { name: '智谱', free: true },
+                { name: '文心', free: true },
+                { name: 'OpenAI DALL-E 3', free: false },
+                { name: 'Stability AI', free: false },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm">
+                  <CheckCircle2 className="w-3 h-3 text-green-500" />
+                  <span>{item.name}</span>
+                  {item.free && <Badge variant="outline" className="text-[10px] h-4 px-1 bg-green-500/10 text-green-600 border-green-500/30">免费额度</Badge>}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       ),
     },
     {
       id: 'step2',
-      title: '第二步：AI 检测（分段检测）',
+      title: '第三步：AI 检测（分段检测）',
       icon: <Brain className="w-5 h-5 text-purple-500" />,
       content: (
         <div className="space-y-4">
@@ -119,10 +186,26 @@ export function ManualView() {
           <div className="space-y-3">
             <h4 className="text-sm font-medium flex items-center gap-2">
               <Badge variant="outline" className="text-xs">1</Badge>
-              点击"开始 AI 检测"
+              AI 检测服务商
             </h4>
-            <p className="text-sm text-muted-foreground ml-6">
-              系统会逐段分析你的内容，评估每段的 AI 生成概率。
+            <div className="ml-6 grid grid-cols-2 gap-2">
+              {[
+                { name: '通义千问', free: true },
+                { name: '智谱', free: true },
+                { name: '文心', free: true },
+                { name: 'Originality.ai', free: false },
+                { name: 'Winston AI', free: false },
+                { name: 'GPTZero', free: false },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm">
+                  <CheckCircle2 className="w-3 h-3 text-green-500" />
+                  <span>{item.name}</span>
+                  {item.free && <Badge variant="outline" className="text-[10px] h-4 px-1 bg-green-500/10 text-green-600 border-green-500/30">免费额度</Badge>}
+                </div>
+              ))}
+            </div>
+            <p className="text-sm text-blue-600 dark:text-blue-400 ml-6">
+              💡 推荐使用国内服务商（通义千问、智谱、文心），有免费额度
             </p>
 
             <h4 className="text-sm font-medium flex items-center gap-2">
@@ -156,14 +239,101 @@ export function ManualView() {
                 <span><strong>70%+</strong>：高疑似 AI，需要大幅优化</span>
               </div>
             </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'polish',
+      title: '第四步：AI 润色与排版',
+      icon: <Sparkles className="w-5 h-5 text-cyan-500" />,
+      content: (
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed">
+            <strong>目的</strong>：使用 AI 对内容进行智能润色、降低AI痕迹、优化排版。
+          </p>
+
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">1</Badge>
+              AI 润色服务商
+            </h4>
+            <div className="ml-6 grid grid-cols-2 gap-2">
+              {[
+                { name: '通义千问', free: true },
+                { name: '豆包', free: true },
+                { name: '智谱', free: true },
+                { name: '文心', free: true },
+                { name: 'DeepSeek', free: true },
+                { name: 'OpenAI', free: false },
+                { name: 'Claude', free: false },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm">
+                  <CheckCircle2 className="w-3 h-3 text-green-500" />
+                  <span>{item.name}</span>
+                  {item.free && <Badge variant="outline" className="text-[10px] h-4 px-1 bg-green-500/10 text-green-600 border-green-500/30">免费额度</Badge>}
+                </div>
+              ))}
+            </div>
+
+            <h4 className="text-sm font-medium flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">2</Badge>
+              选择润色模式
+            </h4>
+            <div className="ml-6 space-y-2">
+              <div className="p-3 bg-muted/30 rounded-lg">
+                <p className="font-medium text-sm">✨ 普通润色</p>
+                <p className="text-sm text-muted-foreground">优化语言表达，使文章更流畅自然</p>
+              </div>
+              <div className="p-3 bg-muted/30 rounded-lg">
+                <p className="font-medium text-sm">🤖 降低AI痕迹</p>
+                <p className="text-sm text-muted-foreground">重写文章使其更像人工创作，降低AI检测分数。功能包括：</p>
+                <ul className="list-disc list-inside space-y-1 ml-4 text-sm text-muted-foreground mt-1">
+                  <li>替换AI常用的模板化连接词</li>
+                  <li>增加口语化和个人化表达</li>
+                  <li>优化句式多样性</li>
+                  <li>增加语气词和自然过渡</li>
+                  <li>加入更多个人观点和真实案例暗示</li>
+                </ul>
+              </div>
+              <div className="p-3 bg-muted/30 rounded-lg">
+                <p className="font-medium text-sm">🚀 内容增强</p>
+                <p className="text-sm text-muted-foreground">提升文章吸引力和传播性，增加互动元素</p>
+              </div>
+              <div className="p-3 bg-muted/30 rounded-lg">
+                <p className="font-medium text-sm">📐 智能排版</p>
+                <p className="text-sm text-muted-foreground">优化文章结构和格式，添加Markdown样式，包括：</p>
+                <ul className="list-disc list-inside space-y-1 ml-4 text-sm text-muted-foreground mt-1">
+                  <li>添加合适的标题层级（#、##、###）</li>
+                  <li>将长段落拆分为易读短段落</li>
+                  <li>添加列表格式（有序和无序列表）</li>
+                  <li>整体排版更清晰易读</li>
+                </ul>
+              </div>
+            </div>
+
+            <h4 className="text-sm font-medium flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">3</Badge>
+              查看和对比
+            </h4>
+            <p className="text-sm text-muted-foreground ml-6">
+              润色完成后，可以在多个标签页之间切换查看：
+            </p>
+            <ul className="list-disc list-inside space-y-1 ml-8 text-sm text-muted-foreground">
+              <li><strong>对比视图</strong>：原文和润色后并排对比，差异行高亮显示</li>
+              <li><strong>润色结果</strong>：只显示润色后的内容</li>
+              <li><strong>Markdown 预览</strong>：预览Markdown渲染效果</li>
+              <li><strong>原文</strong>：只显示原文内容</li>
+              <li><strong>修改说明</strong>：列出所有修改点和字数变化</li>
+            </ul>
 
             <h4 className="text-sm font-medium flex items-center gap-2">
               <Badge variant="outline" className="text-xs">4</Badge>
-              什么是分段检测？
+              使用 AI API
             </h4>
             <p className="text-sm text-muted-foreground ml-6">
-              分段检测将文章按段落拆分，逐段分析 AI 特征。这样你可以精确定位哪些段落 AI 痕迹较重，
-              针对性地进行修改，而不需要重写整篇文章。
+              勾选"使用 AI API"可以使用真实的 AI 模型进行润色（需要先配置 API Key），
+              否则使用本地润色模式。
             </p>
           </div>
         </div>
@@ -171,7 +341,7 @@ export function ManualView() {
     },
     {
       id: 'step3',
-      title: '第三步：同质化查询',
+      title: '第五步：同质化查询',
       icon: <Search className="w-5 h-5 text-amber-500" />,
       content: (
         <div className="space-y-4">
@@ -222,7 +392,7 @@ export function ManualView() {
     },
     {
       id: 'step4',
-      title: '第四步：流量预测',
+      title: '第六步：流量预测',
       icon: <TrendingUp className="w-5 h-5 text-emerald-500" />,
       content: (
         <div className="space-y-4">
@@ -274,7 +444,7 @@ export function ManualView() {
     },
     {
       id: 'step5',
-      title: '第五步：内容逻辑与连贯性检测',
+      title: '第七步：内容逻辑与连贯性检测',
       icon: <FileCheck className="w-5 h-5 text-indigo-500" />,
       content: (
         <div className="space-y-4">
@@ -327,7 +497,7 @@ export function ManualView() {
     },
     {
       id: 'step6',
-      title: '第六步：敏感与违规词检测',
+      title: '第八步：敏感与违规词检测',
       icon: <AlertTriangle className="w-5 h-5 text-orange-500" />,
       content: (
         <div className="space-y-4">
@@ -338,6 +508,27 @@ export function ManualView() {
           <div className="space-y-3">
             <h4 className="text-sm font-medium flex items-center gap-2">
               <Badge variant="outline" className="text-xs">1</Badge>
+              内容安全服务商
+            </h4>
+            <div className="ml-6 grid grid-cols-2 gap-2">
+              {[
+                { name: '通义千问', free: true },
+                { name: '智谱', free: true },
+                { name: '华为内容安全', free: false },
+                { name: '阿里云内容安全', free: false },
+                { name: '腾讯云内容安全', free: false },
+                { name: '百度内容安全', free: false },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm">
+                  <CheckCircle2 className="w-3 h-3 text-green-500" />
+                  <span>{item.name}</span>
+                  {item.free && <Badge variant="outline" className="text-[10px] h-4 px-1 bg-green-500/10 text-green-600 border-green-500/30">免费额度</Badge>}
+                </div>
+              ))}
+            </div>
+
+            <h4 className="text-sm font-medium flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">2</Badge>
               检测哪些内容？
             </h4>
             <ul className="list-disc list-inside space-y-1 ml-8 text-sm text-muted-foreground">
@@ -346,15 +537,6 @@ export function ManualView() {
               <li><strong>引流话术</strong>："加微信"、"扫码关注"等平台限制的内容</li>
               <li><strong>虚假承诺</strong>："暴富"、"躺赚"、"稳赚不赔"等</li>
             </ul>
-
-            <h4 className="text-sm font-medium flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">2</Badge>
-              触发段落显示
-            </h4>
-            <p className="text-sm text-muted-foreground ml-6">
-              每个检测到的敏感/违规词都会显示<strong>触发它的具体段落</strong>，
-              你可以直接看到是哪句话出了问题，方便快速定位和修改。
-            </p>
 
             <h4 className="text-sm font-medium flex items-center gap-2">
               <Badge variant="outline" className="text-xs">3</Badge>
@@ -376,7 +558,7 @@ export function ManualView() {
     },
     {
       id: 'step7',
-      title: '第七步：营销文与广告浓度检测',
+      title: '第九步：营销文与广告浓度检测',
       icon: <Megaphone className="w-5 h-5 text-pink-500" />,
       content: (
         <div className="space-y-4">
@@ -434,7 +616,7 @@ export function ManualView() {
     },
     {
       id: 'step8',
-      title: '第八步：综合检测报告',
+      title: '第十步：综合检测报告',
       icon: <FileCheck className="w-5 h-5 text-violet-500" />,
       content: (
         <div className="space-y-4">
@@ -473,99 +655,38 @@ export function ManualView() {
       ),
     },
     {
-      id: 'step9',
-      title: '第九步：AI 润色与排版',
-      icon: <Sparkles className="w-5 h-5 text-cyan-500" />,
-      content: (
-        <div className="space-y-4">
-          <p className="text-sm leading-relaxed">
-            <strong>目的</strong>：使用 AI 对内容进行智能润色和优化。
-          </p>
-
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">1</Badge>
-              选择润色模式
-            </h4>
-            <ul className="list-disc list-inside space-y-1 ml-8 text-sm text-muted-foreground">
-              <li><strong>普通润色</strong>：优化语言表达，使文章更流畅自然</li>
-              <li><strong>降低AI痕迹</strong>：重写文章使其更像人工创作</li>
-              <li><strong>内容增强</strong>：提升吸引力和传播性</li>
-              <li><strong>智能排版</strong>：优化文章结构和格式</li>
-            </ul>
-
-            <h4 className="text-sm font-medium flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">2</Badge>
-              查看和对比
-            </h4>
-            <p className="text-sm text-muted-foreground ml-6">
-              润色完成后，可以在"润色结果"、"原文对比"、"修改说明"三个标签页之间切换，
-              查看润色前后的差异。
-            </p>
-
-            <h4 className="text-sm font-medium flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">3</Badge>
-              应用修改
-            </h4>
-            <p className="text-sm text-muted-foreground ml-6">
-              满意后点击"应用到编辑器"，润色后的内容会替换编辑器中的原文。
-              你也可以点击"复制"按钮复制润色后的内容。
-            </p>
-          </div>
-
-          <div className="p-3 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
-            <p className="text-sm flex items-center gap-2 text-cyan-600 dark:text-cyan-400">
-              <Lightbulb className="w-4 h-4" />
-              <strong>注意</strong>：AI 润色需要先在"API 接口设置"中配置你的 API Key。
-            </p>
-          </div>
-        </div>
-      ),
-    },
-    {
-    id: 'step10',
-    title: '第十步：热门文章采集',
+    id: 'hot-articles',
+    title: '第十一步：热门文章采集',
     icon: <Rss className="w-5 h-5 text-orange-500" />,
     content: (
       <div className="space-y-4">
         <p className="text-sm leading-relaxed">
-          <strong>目的</strong>：采集各平台热门文章，获取创作灵感。
+          <strong>目的</strong>：查看各平台热门文章来源，获取创作灵感。
         </p>
 
         <div className="space-y-3">
           <h4 className="text-sm font-medium flex items-center gap-2">
             <Badge variant="outline" className="text-xs">1</Badge>
-            筛选和搜索
+            热门文章来源
           </h4>
           <p className="text-sm text-muted-foreground ml-6">
-            你可以按平台筛选（今日头条、微信公众号、知乎等），
-            也可以搜索特定关键词或标签。
+            平台预设了多个热门文章来源，点击名称可直接跳转到对应平台：
           </p>
+          <div className="ml-6 grid grid-cols-2 gap-2">
+            {[
+              '微信公众号', '今日头条', '腾讯新闻', '知乎热榜',
+              '微博热搜', 'B站热门', '抖音热点', '小红书热门'
+            ].map((p, i) => (
+              <div key={i} className="flex items-center gap-2 text-sm">
+                <CheckCircle2 className="w-3 h-3 text-green-500" />
+                <span>{p}</span>
+                <ExternalLink className="w-3 h-3 text-muted-foreground" />
+              </div>
+            ))}
+          </div>
 
           <h4 className="text-sm font-medium flex items-center gap-2">
             <Badge variant="outline" className="text-xs">2</Badge>
-            排序方式
-          </h4>
-          <p className="text-sm text-muted-foreground ml-6">
-            支持按阅读量或发布时间排序，帮助你找到最热门或最新的内容。
-          </p>
-
-          <h4 className="text-sm font-medium flex items-center gap-2">
-            <Badge variant="outline" className="text-xs">3</Badge>
-            自定义 API 接口
-          </h4>
-          <p className="text-sm text-muted-foreground ml-6">
-            点击"配置接口"按钮，可以配置自定义数据源：
-          </p>
-          <ul className="list-disc list-inside space-y-1 ml-8 text-sm text-muted-foreground">
-            <li>启用自定义接口开关</li>
-            <li>填写 API 地址和可选的 API Key</li>
-            <li>API 应返回文章数组或包含 articles/data 字段</li>
-            <li>文章字段：title, source, platform, views, url, tags, publishDate</li>
-          </ul>
-
-          <h4 className="text-sm font-medium flex items-center gap-2">
-            <Badge variant="outline" className="text-xs">4</Badge>
             利用热门文章
           </h4>
           <ul className="list-disc list-inside space-y-1 ml-8 text-sm text-muted-foreground">
@@ -579,53 +700,65 @@ export function ManualView() {
     ),
   },
     {
-      id: 'step11',
-      title: '第十一步：API 接口设置',
+      id: 'api-settings',
+      title: '第十二步：API 接口设置',
       icon: <Settings className="w-5 h-5 text-slate-500" />,
       content: (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed">
-            <strong>目的</strong>：配置 AI 模型 API，启用 AI 润色等高级功能。
+            <strong>目的</strong>：配置各种 AI 服务 API，启用高级功能。
           </p>
 
           <div className="space-y-3">
             <h4 className="text-sm font-medium flex items-center gap-2">
               <Badge variant="outline" className="text-xs">1</Badge>
-              选择服务商
+              配置模块说明
             </h4>
             <p className="text-sm text-muted-foreground ml-6">
-              平台预设了多种主流 AI 服务商，点击即可自动填充配置：
+              API 接口设置分为 6 个模块：
             </p>
-            <div className="ml-6 grid grid-cols-2 gap-2 mb-3">
-              {['OpenAI (GPT-4)', 'Claude', '智谱 AI', '通义千问', '文心一言', 'Moonshot (Kimi)', 'DeepSeek', '豆包'].map((p, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="w-3 h-3 text-green-500" />
-                  <span>{p}</span>
+            <div className="ml-6 grid grid-cols-2 gap-2">
+              {[
+                { icon: <Brain className="w-3 h-3" />, label: '大模型' },
+                { icon: <ScanFace className="w-3 h-3" />, label: 'AI 检测' },
+                { icon: <Shield className="w-3 h-3" />, label: '内容安全' },
+                { icon: <Image className="w-3 h-3" />, label: '图片生成' },
+                { icon: <Sparkles className="w-3 h-3" />, label: 'AI 润色' },
+                { icon: <TrendingUp className="w-3 h-3" />, label: '热门文章' },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-2 p-2 bg-muted/30 rounded text-xs">
+                  {item.icon}
+                  <span>{item.label}</span>
                 </div>
               ))}
             </div>
-            <p className="text-sm text-blue-600 dark:text-blue-400 ml-6">
-              💡 提示：按住 <strong>Ctrl/Command</strong> 键点击服务商按钮可直接跳转到对应官网获取 API Key
-            </p>
 
             <h4 className="text-sm font-medium flex items-center gap-2">
               <Badge variant="outline" className="text-xs">2</Badge>
-              填写配置信息
+              免费额度推荐
             </h4>
-            <ul className="list-disc list-inside space-y-1 ml-8 text-sm text-muted-foreground">
-              <li><strong>API Base URL</strong>：API 请求地址（选择预设后自动填充）</li>
-              <li><strong>API Key</strong>：你的 API 密钥（从服务商官网获取）</li>
-              <li><strong>模型名称</strong>：要使用的模型（如 gpt-4o）</li>
-              <li><strong>最大 Token</strong>：单次请求的最大输出长度</li>
-              <li><strong>Temperature</strong>：控制输出的创造性（0=确定，2=随机）</li>
-            </ul>
+            <div className="ml-6 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+              <p className="text-sm font-medium text-green-600 dark:text-green-400 mb-2">
+                💡 推荐使用以下国内服务商（均有免费额度）：
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-sm text-green-700 dark:text-green-300">
+                <li><strong>通义千问</strong>：大模型、AI检测、内容安全、图片生成、AI润色</li>
+                <li><strong>智谱</strong>：大模型、AI检测、内容安全、图片生成、AI润色</li>
+                <li><strong>豆包</strong>：大模型、图片生成、AI润色</li>
+                <li><strong>文心</strong>：大模型、AI检测、图片生成、AI润色</li>
+                <li><strong>DeepSeek</strong>：大模型、AI润色</li>
+              </ul>
+            </div>
 
             <h4 className="text-sm font-medium flex items-center gap-2">
               <Badge variant="outline" className="text-xs">3</Badge>
-              测试连接
+              快速选择服务商
             </h4>
             <p className="text-sm text-muted-foreground ml-6">
-              点击"测试连接"验证配置是否正确。如果连接成功，你就可以使用 AI 润色等功能了。
+              点击服务商按钮即可自动填充配置：
+            </p>
+            <p className="text-sm text-blue-600 dark:text-blue-400 ml-6">
+              💡 提示：按住 <strong>Ctrl/Command</strong> 键点击服务商按钮可直接跳转到对应官网获取 API Key
             </p>
 
             <h4 className="text-sm font-medium flex items-center gap-2">
@@ -633,7 +766,7 @@ export function ManualView() {
               保存配置
             </h4>
             <p className="text-sm text-muted-foreground ml-6">
-              点击"保存配置"将设置保存到本地浏览器。API Key 仅保存在你的设备上，不会上传到任何服务器。
+              点击"保存所有配置"将设置保存到本地浏览器。API Key 仅保存在你的设备上，不会上传到任何服务器。
             </p>
           </div>
         </div>
@@ -698,7 +831,7 @@ export function ManualView() {
             </div>
             <div>
               <CardTitle className="text-lg">使用说明</CardTitle>
-              <CardDescription>详细的使用指南，从入门到精通</CardDescription>
+              <CardDescription>详细的使用指南，从入门到精通（已更新最新功能）</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -711,11 +844,13 @@ export function ManualView() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            {['内容编辑', 'AI检测', '同质化', '流量预测', '逻辑检测', '敏感词', '营销检测', '综合报告', 'AI润色', 'API设置'].map((step, i) => (
+            {[
+              '内容编辑', 'AI生成文章', 'AI检测', 'AI润色', 'API设置'
+            ].map((step, i) => (
               <span key={i} className="flex items-center gap-1">
                 <Badge variant="outline" className="text-xs">{i + 1}</Badge>
                 <span className="text-muted-foreground">{step}</span>
-                {i < 9 && <ArrowRight className="w-3 h-3 text-muted-foreground" />}
+                {i < 4 && <ArrowRight className="w-3 h-3 text-muted-foreground" />}
               </span>
             ))}
           </div>

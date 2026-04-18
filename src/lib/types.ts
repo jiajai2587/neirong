@@ -4,13 +4,34 @@
 export type LlmProvider = 'dashscope' | 'openai' | 'anthropic' | 'deepseek' | 'openai-compatible' | 'doubao' | 'zhipu' | 'wenxin' | 'moonshot' | 'kimi';
 
 // AI 检测服务提供商类型
-export type AiDetectionProvider = 'originality' | 'winston' | 'copyscape' | 'local' | 'gptzero' | 'contentatscale' | 'scribbr' | 'zerogpt';
+export type AiDetectionProvider = 'originality' | 'winston' | 'copyscape' | 'local' | 'gptzero' | 'contentatscale' | 'scribbr' | 'zerogpt' | 'dashscope' | 'zhipu' | 'wenxin';
 
 // 内容安全服务提供商类型
-export type ContentSafetyProvider = 'aliyun' | 'tencent' | 'baidu' | 'local';
+export type ContentSafetyProvider = 'aliyun' | 'tencent' | 'baidu' | 'local' | 'dashscope' | 'zhipu' | 'huawei';
 
 // 图片生成服务提供商类型
-export type ImageGenerationProvider = 'openai' | 'dashscope' | 'stability' | 'midjourney' | 'custom';
+export type ImageGenerationProvider = 'openai' | 'dashscope' | 'stability' | 'midjourney' | 'custom' | 'doubao' | 'zhipu' | 'wenxin';
+
+// AI润色服务提供商类型
+export type PolishProvider = 'openai' | 'dashscope' | 'deepseek' | 'doubao' | 'zhipu' | 'wenxin' | 'anthropic' | 'custom';
+
+// AI润色配置
+export interface PolishConfig {
+  provider: PolishProvider;
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+  maxTokens: number;
+  temperature: number;
+}
+
+// 热门文章来源配置
+export interface HotArticleSource {
+  id: string;
+  name: string;
+  url: string;
+  platform: string;
+}
 
 // 图片生成配置
 export interface ImageGenerationConfig {
@@ -64,6 +85,7 @@ export interface AppConfig {
   contentSafety: ContentSafetyConfig;
   hotArticles: HotArticlesConfig;
   imageGeneration: ImageGenerationConfig;
+  polish: PolishConfig;
 }
 
 export interface AiDetectionResult {

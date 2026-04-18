@@ -5,9 +5,11 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   FileText, Copy, Trash2, Download, Upload,
-  AlignLeft, AlignCenter, AlignRight, Bold, Italic, List, ListOrdered
+  AlignLeft, AlignCenter, AlignRight, Bold, Italic, List, ListOrdered,
+  Heading1, Heading2, Heading3, Quote, Code, Link, Image as ImageIcon, Undo2, Redo2, Eye
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -19,9 +21,8 @@ interface ContentEditorProps {
 }
 
 export function ContentEditor({ content, onContentChange, title, onTitleChange }: ContentEditorProps) {
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [activeTab, setActiveTab] = useState('edit');
   const [wordCount, setWordCount] = useState(0);
-  const [selectedPlatform, setSelectedPlatform] = useState('all');
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
@@ -83,6 +84,26 @@ export function ContentEditor({ content, onContentChange, title, onTitleChange }
     input.click();
   };
 
+  const renderMarkdown = (text: string) => {
+    return text
+      .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold mt-4 mb-2 text-foreground">$1</h3>')
+      .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold mt-5 mb-3 text-foreground">$1</h2>')
+      .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mt-6 mb-4 text-foreground">$1</h1>')
+      .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+      .replace(/^> (.*$)/gim, '<blockquote class="border-l-4 border-primary/50 pl-4 py-1 my-2 bg-primary/5 italic text-muted-foreground">$1</blockquote>')
+      .replace(/`(.*?)`/gim, '<code class="bg-muted px-1.5 py-0.5 rounded text-sm font-mono text-primary">$1</code>')
+      .replace(/^\- (.*$)/gim, '<li class="ml-4 list-disc my-1">$1</li>')
+      .replace(/^\d+\. (.*$)/gim, '<li class="ml-4 list-decimal my-1">$1</li>')
+      .split('\n').map((line, i) => {
+        if (line.trim() === '') return '<div class="h-3"></div>';
+        if (line.startsWith('<li')) return line;
+        if (line.startsWith('<blockquote')) return line;
+        if (line.startsWith('<h')) return line;
+        return `<p class="mb-2 leading-relaxed text-foreground">${line}</p>`;
+      }).join('');
+  };
+
   const platforms = [
     { value: 'all', label: '全平台通用' },
     { value: 'wechat', label: '微信公众号' },
@@ -94,8 +115,7 @@ export function ContentEditor({ content, onContentChange, title, onTitleChange }
   ];
 
   return (
-    <div className={cn('space-y-4', isFullscreen && 'fixed inset-4 z-50 bg-background p-4 overflow-auto')}>
-      {/* Header */}
+    <div className="space-y-4">
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
@@ -112,7 +132,7 @@ export function ContentEditor({ content, onContentChange, title, onTitleChange }
               <Badge variant="outline" className="text-xs">
                 {wordCount} 字
               </Badge>
-              <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
+              <Select defaultValue="all">
                 <SelectTrigger className="w-40 h-8 text-xs">
                   <SelectValue />
                 </SelectTrigger>
@@ -126,7 +146,6 @@ export function ContentEditor({ content, onContentChange, title, onTitleChange }
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          {/* Title input */}
           <div>
             <Label className="text-sm font-medium mb-1.5 block">文章标题</Label>
             <input
@@ -138,56 +157,114 @@ export function ContentEditor({ content, onContentChange, title, onTitleChange }
             />
           </div>
 
-          {/* Toolbar */}
-          <div className="flex items-center gap-1 p-1.5 bg-muted/50 rounded-lg flex-wrap">
-            <button onClick={() => insertText('**', '**')} className="p-1.5 rounded hover:bg-muted transition-colors" title="加粗">
-              <Bold className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-1 p-2 bg-muted/50 rounded-lg flex-wrap">
+            <button onClick={() => insertText('# ', '')} className="p-2 rounded hover:bg-muted transition-colors" title="一级标题">
+              <Heading1 className="w-4 h-4" />
             </button>
-            <button onClick={() => insertText('*', '*')} className="p-1.5 rounded hover:bg-muted transition-colors" title="斜体">
-              <Italic className="w-3.5 h-3.5" />
+            <button onClick={() => insertText('## ', '')} className="p-2 rounded hover:bg-muted transition-colors" title="二级标题">
+              <Heading2 className="w-4 h-4" />
             </button>
-            <div className="w-px h-5 bg-border mx-1" />
-            <button onClick={() => insertText('\n# ', '')} className="p-1.5 rounded hover:bg-muted transition-colors" title="标题">
-              <AlignLeft className="w-3.5 h-3.5" />
+            <button onClick={() => insertText('### ', '')} className="p-2 rounded hover:bg-muted transition-colors" title="三级标题">
+              <Heading3 className="w-4 h-4" />
             </button>
-            <button onClick={() => insertText('\n- ', '')} className="p-1.5 rounded hover:bg-muted transition-colors" title="无序列表">
-              <List className="w-3.5 h-3.5" />
+            <div className="w-px h-6 bg-border mx-1" />
+            <button onClick={() => insertText('**', '**')} className="p-2 rounded hover:bg-muted transition-colors" title="加粗">
+              <Bold className="w-4 h-4" />
             </button>
-            <button onClick={() => insertText('\n1. ', '')} className="p-1.5 rounded hover:bg-muted transition-colors" title="有序列表">
-              <ListOrdered className="w-3.5 h-3.5" />
+            <button onClick={() => insertText('*', '*')} className="p-2 rounded hover:bg-muted transition-colors" title="斜体">
+              <Italic className="w-4 h-4" />
+            </button>
+            <button onClick={() => insertText('`', '`')} className="p-2 rounded hover:bg-muted transition-colors" title="代码">
+              <Code className="w-4 h-4" />
+            </button>
+            <div className="w-px h-6 bg-border mx-1" />
+            <button onClick={() => insertText('\n> ', '')} className="p-2 rounded hover:bg-muted transition-colors" title="引用">
+              <Quote className="w-4 h-4" />
+            </button>
+            <button onClick={() => insertText('\n- ', '')} className="p-2 rounded hover:bg-muted transition-colors" title="无序列表">
+              <List className="w-4 h-4" />
+            </button>
+            <button onClick={() => insertText('\n1. ', '')} className="p-2 rounded hover:bg-muted transition-colors" title="有序列表">
+              <ListOrdered className="w-4 h-4" />
+            </button>
+            <div className="w-px h-6 bg-border mx-1" />
+            <button onClick={() => insertText('[', '](url)')} className="p-2 rounded hover:bg-muted transition-colors" title="链接">
+              <Link className="w-4 h-4" />
+            </button>
+            <button onClick={() => insertText('![图片描述](图片链接)', '')} className="p-2 rounded hover:bg-muted transition-colors" title="图片">
+              <ImageIcon className="w-4 h-4" />
             </button>
             <div className="flex-1" />
-            <button onClick={importContent} className="p-1.5 rounded hover:bg-muted transition-colors text-xs flex items-center gap-1" title="导入">
-              <Upload className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">导入</span>
+            <button onClick={() => {}} className="p-2 rounded hover:bg-muted transition-colors" title="撤销">
+              <Undo2 className="w-4 h-4" />
             </button>
-            <button onClick={exportContent} className="p-1.5 rounded hover:bg-muted transition-colors text-xs flex items-center gap-1" title="导出">
-              <Download className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">导出</span>
-            </button>
-            <button onClick={copyContent} className="p-1.5 rounded hover:bg-muted transition-colors text-xs flex items-center gap-1" title="复制">
-              <Copy className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">复制</span>
-            </button>
-            <button onClick={clearContent} className="p-1.5 rounded hover:bg-destructive/10 text-destructive transition-colors text-xs flex items-center gap-1" title="清空">
-              <Trash2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">清空</span>
+            <button onClick={() => {}} className="p-2 rounded hover:bg-muted transition-colors" title="重做">
+              <Redo2 className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Content textarea */}
-          <Textarea
-            value={content}
-            onChange={handleContentChange}
-            placeholder={"在此输入或粘贴你的文章内容...\n\n支持 Markdown 格式，可以添加标题、列表、加粗等格式。\n\n提示：内容越丰富，检测结果越准确。建议至少输入200字以上。"}
-            className="min-h-[300px] text-sm leading-relaxed resize-y font-mono"
-          />
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="edit" className="flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                编辑
+              </TabsTrigger>
+              <TabsTrigger value="preview" className="flex items-center gap-2">
+                <Eye className="w-4 h-4" />
+                预览
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Stats bar */}
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <span>字数：{wordCount}</span>
-            <span>段落：{content.split(/\n+/).filter(p => p.trim()).length}</span>
-            <span>句子：{content.split(/[。！？.!?]/).filter(s => s.trim()).length}</span>
+            <TabsContent value="edit" className="mt-2">
+              <Textarea
+                value={content}
+                onChange={handleContentChange}
+                placeholder={"在此输入或粘贴你的文章内容...\n\n支持 Markdown 格式工具栏，可以快速添加标题、列表、加粗等格式。\n\n提示：内容越丰富，检测结果越准确。建议至少输入200字以上。"}
+                className="min-h-[350px] text-sm leading-relaxed resize-y font-mono"
+              />
+            </TabsContent>
+
+            <TabsContent value="preview" className="mt-2">
+              <div className="min-h-[350px] p-6 bg-background border border-border rounded-lg">
+                {content ? (
+                  <div 
+                    className="prose prose-sm dark:prose-invert max-w-none"
+                    dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
+                  />
+                ) : (
+                  <div className="text-muted-foreground text-center py-20">
+                    <Eye className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                    <p>暂无内容可预览</p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center gap-4">
+              <span>字数：{wordCount}</span>
+              <span>段落：{content.split(/\n+/).filter(p => p.trim()).length}</span>
+              <span>句子：{content.split(/[。！？.!?]/).filter(s => s.trim()).length}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={importContent} className="p-2 rounded hover:bg-muted transition-colors text-xs flex items-center gap-1" title="导入">
+                <Upload className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">导入</span>
+              </button>
+              <button onClick={exportContent} className="p-2 rounded hover:bg-muted transition-colors text-xs flex items-center gap-1" title="导出">
+                <Download className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">导出</span>
+              </button>
+              <button onClick={copyContent} className="p-2 rounded hover:bg-muted transition-colors text-xs flex items-center gap-1" title="复制">
+                <Copy className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">复制</span>
+              </button>
+              <button onClick={clearContent} className="p-2 rounded hover:bg-destructive/10 text-destructive transition-colors text-xs flex items-center gap-1" title="清空">
+                <Trash2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">清空</span>
+              </button>
+            </div>
           </div>
         </CardContent>
       </Card>

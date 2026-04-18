@@ -5,9 +5,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, Copy, Check, FileText, Loader2, ArrowRightLeft, ChevronsLeftRight, Wand2, RefreshCw } from 'lucide-react';
+import { Sparkles, Copy, Check, FileText, Loader2, ArrowRightLeft, ChevronsLeftRight, Wand2, RefreshCw, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { polishContentLocal } from '@/lib/analysis';
+import { callPolishApi, getPolishConfig } from '@/lib/api';
 import type { PolishResult } from '@/lib/types';
 
 interface PolishViewProps {
@@ -23,6 +24,12 @@ export function PolishView({ content, onContentChange }: PolishViewProps) {
   const [activeTab, setActiveTab] = useState('split');
   const [inputText, setInputText] = useState('');
   const [progress, setProgress] = useState(0);
+  const [useApi, setUseApi] = useState(false);
+
+  const hasApiKey = () => {
+    const config = getPolishConfig();
+    return !!config.apiKey;
+  };
 
   const handlePolish = async () => {
     const textToPolish = inputText || content;
@@ -31,7 +38,6 @@ export function PolishView({ content, onContentChange }: PolishViewProps) {
     setProgress(0);
     setResult(null);
 
-    // 模拟处理进度
     const progressInterval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 90) {
@@ -42,18 +48,28 @@ export function PolishView({ content, onContentChange }: PolishViewProps) {
       });
     }, 200);
 
-    // 使用本地润色（立即生效）
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    clearInterval(progressInterval);
-    setProgress(100);
+    try {
+      let polished: string;
 
-    const polished = polishContentLocal(textToPolish, polishMode);
+      if (useApi && hasApiKey()) {
+        polished = await callPolishApi(textToPolish, polishMode);
+      } else {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        polished = polishContentLocal(textToPolish, polishMode);
+      }
 
-    setResult({
-      original: textToPolish,
-      polished,
-      changes: getChangesDescription(polishMode),
-    });
+      clearInterval(progressInterval);
+      setProgress(100);
+
+      setResult({
+        original: textToPolish,
+        polished,
+        changes: getChangesDescription(polishMode),
+      });
+    } catch (error: any) {
+      clearInterval(progressInterval);
+      alert(error.message || '润色失败，请重试');
+    }
 
     setIsPolishing(false);
     setProgress(0);
@@ -85,11 +101,27 @@ export function PolishView({ content, onContentChange }: PolishViewProps) {
     }));
   };
 
+  const renderMarkdown = (text: string) => {
+    return text
+      .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold mt-4 mb-2 text-foreground">$1</h3>')
+      .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold mt-5 mb-3 text-foreground">$1</h2>')
+      .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mt-6 mb-4 text-foreground">$1</h1>')
+      .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+      .replace(/^\- (.*$)/gim, '<li class="ml-4 list-disc">$1</li>')
+      .replace(/^\d+\. (.*$)/gim, '<li class="ml-4 list-decimal">$1</li>')
+      .split('\n').map((line, i) => {
+        if (line.trim() === '') return '<div class="h-2"></div>';
+        if (line.startsWith('<li')) return line;
+        return `<p class="mb-2 leading-relaxed">${line}</p>`;
+      }).join('');
+  };
+
   const modeDescriptions: Record<string, { name: string; desc: string; icon: string }> = {
     normal: { name: '普通润色', desc: '优化语言表达，使文章更流畅自然', icon: '✨' },
     reduce_ai: { name: '降低AI痕迹', desc: '重写文章使其更像人工创作', icon: '🤖' },
     enhance: { name: '内容增强', desc: '提升文章吸引力和传播性', icon: '🚀' },
-    format: { name: '智能排版', desc: '优化文章结构和格式', icon: '📐' },
+    format: { name: '智能排版', desc: '优化文章结构和格式，添加Markdown样式', icon: '📐' },
   };
 
   return (
@@ -114,11 +146,46 @@ export function PolishView({ content, onContentChange }: PolishViewProps) {
               <li><strong>普通润色</strong>：优化语言表达，使文章更流畅自然</li>
               <li><strong>降低AI痕迹</strong>：重写文章使其更像人工创作，降低AI检测分数</li>
               <li><strong>内容增强</strong>：提升文章吸引力和传播性，增加互动元素</li>
-              <li><strong>智能排版</strong>：优化文章结构和格式，提升可读性</li>
+              <li><strong>智能排版</strong>：优化文章结构和格式，添加Markdown标题、列表等格式</li>
             </ul>
           </div>
 
-          {/* Input Area */}
+          {!hasApiKey() && useApi && (
+            <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-amber-600 dark:text-amber-400">
+                <p className="font-medium">未配置 AI 润色 API Key</p>
+                <p className="text-xs mt-1 text-amber-500/80">
+                  请在"API 接口设置"中配置 AI 润色 API Key（推荐使用通义千问，有免费额度），或取消勾选"使用 AI API"使用本地模式。
+                </p>
+              </div>
+            </div>
+          )}
+
+          {hasApiKey() && useApi && (
+            <div className="mb-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20 flex items-start gap-2">
+              <Check className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-green-600 dark:text-green-400">
+                <p className="font-medium">AI API 已连接</p>
+                <p className="text-xs mt-1 text-green-500/80">
+                  将使用 AI 模型进行高质量润色。
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 mb-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useApi}
+                onChange={(e) => setUseApi(e.target.checked)}
+                className="rounded border-input"
+              />
+              <span className="text-sm">使用 AI API（更高质量）</span>
+            </label>
+          </div>
+
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm font-medium">输入内容</label>
@@ -161,7 +228,6 @@ export function PolishView({ content, onContentChange }: PolishViewProps) {
             </p>
           </div>
 
-          {/* Controls */}
           <div className="flex items-center gap-3 mb-4">
             <Select value={polishMode} onValueChange={setPolishMode}>
               <SelectTrigger className="w-48">
@@ -174,7 +240,7 @@ export function PolishView({ content, onContentChange }: PolishViewProps) {
                 <SelectItem value="format">📐 智能排版</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={handlePolish} disabled={!(inputText || content).trim() || isPolishing} className="flex-1">
+            <Button onClick={handlePolish} disabled={!(inputText || content).trim() || isPolishing || (useApi && !hasApiKey())} className="flex-1">
               {isPolishing ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -189,7 +255,6 @@ export function PolishView({ content, onContentChange }: PolishViewProps) {
             </Button>
           </div>
 
-          {/* Progress bar */}
           {isPolishing && (
             <div className="mb-4">
               <div className="w-full bg-muted rounded-full h-2">
@@ -201,7 +266,6 @@ export function PolishView({ content, onContentChange }: PolishViewProps) {
             </div>
           )}
 
-          {/* Mode description */}
           <div className="p-3 rounded-lg bg-cyan-500/5 border border-cyan-500/20 mb-2">
             <p className="text-sm text-cyan-600 dark:text-cyan-400">
               <strong>{modeDescriptions[polishMode].icon} {modeDescriptions[polishMode].name}</strong>
@@ -220,11 +284,11 @@ export function PolishView({ content, onContentChange }: PolishViewProps) {
                 对比视图
               </TabsTrigger>
               <TabsTrigger value="polished" className="flex-1">润色结果</TabsTrigger>
+              <TabsTrigger value="markdown" className="flex-1">Markdown 预览</TabsTrigger>
               <TabsTrigger value="original" className="flex-1">原文</TabsTrigger>
               <TabsTrigger value="changes" className="flex-1">修改说明</TabsTrigger>
             </TabsList>
 
-            {/* Split View */}
             <TabsContent value="split" className="mt-4">
               <Card>
                 <CardHeader className="pb-3">
@@ -248,7 +312,6 @@ export function PolishView({ content, onContentChange }: PolishViewProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4">
-                    {/* Original */}
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 mb-2">
                         <Badge variant="outline" className="text-xs">原文</Badge>
@@ -261,7 +324,6 @@ export function PolishView({ content, onContentChange }: PolishViewProps) {
                       </div>
                     </div>
 
-                    {/* Polished */}
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 mb-2">
                         <Badge className="text-xs bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/30">润色后</Badge>
@@ -275,7 +337,6 @@ export function PolishView({ content, onContentChange }: PolishViewProps) {
                     </div>
                   </div>
 
-                  {/* Line-by-line comparison */}
                   <div className="mt-4 pt-4 border-t border-border">
                     <h4 className="text-sm font-medium mb-3">逐行对比（有变化的行已高亮）</h4>
                     <div className="space-y-0.5 max-h-[400px] overflow-y-auto border border-border rounded-lg divide-y divide-border/50">
@@ -310,7 +371,6 @@ export function PolishView({ content, onContentChange }: PolishViewProps) {
               </Card>
             </TabsContent>
 
-            {/* Polished Result */}
             <TabsContent value="polished" className="mt-4">
               <Card>
                 <CardHeader className="pb-3">
@@ -338,7 +398,32 @@ export function PolishView({ content, onContentChange }: PolishViewProps) {
               </Card>
             </TabsContent>
 
-            {/* Original */}
+            <TabsContent value="markdown" className="mt-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">Markdown 预览</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={handleCopy} className="text-xs">
+                        {copied ? <Check className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
+                        {copied ? '已复制' : '复制'}
+                      </Button>
+                      <Button size="sm" onClick={handleApply} className="text-xs">
+                        <FileText className="w-3 h-3 mr-1" />
+                        应用到编辑器
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div 
+                    className="min-h-[400px] p-4 bg-background border border-border rounded-lg"
+                    dangerouslySetInnerHTML={{ __html: renderMarkdown(result.polished) }}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
             <TabsContent value="original" className="mt-4">
               <Card>
                 <CardHeader className="pb-3">
@@ -354,7 +439,6 @@ export function PolishView({ content, onContentChange }: PolishViewProps) {
               </Card>
             </TabsContent>
 
-            {/* Changes */}
             <TabsContent value="changes" className="mt-4">
               <Card>
                 <CardHeader>
@@ -417,6 +501,8 @@ function getChangesDescription(mode: string): string[] {
         '优化了句式多样性',
         '减少了AI常见的固定句式模式',
         '增加了语气词和自然过渡',
+        '加入了更多个人观点和真实案例暗示',
+        '调整了语速和节奏，更接近真人写作',
       ];
     case 'enhance':
       return [
@@ -428,11 +514,12 @@ function getChangesDescription(mode: string): string[] {
       ];
     case 'format':
       return [
-        '添加了标题层级结构',
+        '添加了合适的标题层级（#、##、###）',
         '优化了段落间距和分段',
         '将长段落拆分为易读短段落',
-        '添加了小标题和列表格式',
+        '添加了列表格式（有序和无序列表）',
         '整体排版更清晰易读',
+        '符合Markdown规范，便于在各平台发布',
       ];
     default:
       return ['已完成润色处理'];

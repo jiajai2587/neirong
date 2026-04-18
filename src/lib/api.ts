@@ -11,6 +11,9 @@ import type {
   SensitiveCheckResult,
   ImageGenerationConfig,
   ImageGenerationProvider,
+  PolishConfig,
+  PolishProvider,
+  HotArticleSource,
 } from './types';
 
 // ==================== 默认配置 ====================
@@ -138,6 +141,21 @@ export const DEFAULT_AI_DETECTION_CONFIGS: Record<AiDetectionProvider, AiDetecti
     apiKey: '',
     baseUrl: 'https://api.zerogpt.com/api',
   },
+  dashscope: {
+    provider: 'dashscope',
+    apiKey: '',
+    baseUrl: 'https://dashscope.aliyuncs.com',
+  },
+  zhipu: {
+    provider: 'zhipu',
+    apiKey: '',
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+  },
+  wenxin: {
+    provider: 'wenxin',
+    apiKey: '',
+    baseUrl: 'https://aip.baidubce.com',
+  },
 };
 
 export const DEFAULT_CONTENT_SAFETY_CONFIGS: Record<ContentSafetyProvider, ContentSafetyConfig> = {
@@ -161,6 +179,19 @@ export const DEFAULT_CONTENT_SAFETY_CONFIGS: Record<ContentSafetyProvider, Conte
     apiKey: '',
     secretKey: '',
   },
+  dashscope: {
+    provider: 'dashscope',
+    apiKey: '',
+  },
+  zhipu: {
+    provider: 'zhipu',
+    apiKey: '',
+  },
+  huawei: {
+    provider: 'huawei',
+    apiKey: '',
+    region: 'cn-north-4',
+  },
 };
 
 export const DEFAULT_IMAGE_GENERATION_CONFIGS: Record<ImageGenerationProvider, ImageGenerationConfig> = {
@@ -177,7 +208,7 @@ export const DEFAULT_IMAGE_GENERATION_CONFIGS: Record<ImageGenerationProvider, I
     provider: 'dashscope',
     baseUrl: 'https://dashscope.aliyuncs.com/api/v1',
     apiKey: '',
-    model: 'qwen-vl-plus',
+    model: 'wanx-v1',
     size: '1024x1024',
     quality: 'standard',
     style: 'vivid',
@@ -209,6 +240,33 @@ export const DEFAULT_IMAGE_GENERATION_CONFIGS: Record<ImageGenerationProvider, I
     quality: 'standard',
     style: 'vivid',
   },
+  doubao: {
+    provider: 'doubao',
+    baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
+    apiKey: '',
+    model: 'ep-20241203163449-j7x68',
+    size: '1024x1024',
+    quality: 'standard',
+    style: 'vivid',
+  },
+  zhipu: {
+    provider: 'zhipu',
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4/images',
+    apiKey: '',
+    model: 'cogview-4',
+    size: '1024x1024',
+    quality: 'standard',
+    style: 'vivid',
+  },
+  wenxin: {
+    provider: 'wenxin',
+    baseUrl: 'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop',
+    apiKey: '',
+    model: 'ernie-vilg-v2',
+    size: '1024x1024',
+    quality: 'standard',
+    style: 'vivid',
+  },
 };
 
 export const DEFAULT_HOT_ARTICLES_CONFIG: HotArticlesConfig = {
@@ -217,12 +275,131 @@ export const DEFAULT_HOT_ARTICLES_CONFIG: HotArticlesConfig = {
   apiKey: '',
 };
 
+export const DEFAULT_POLISH_CONFIGS: Record<PolishProvider, PolishConfig> = {
+  openai: {
+    provider: 'openai',
+    baseUrl: 'https://api.openai.com/v1',
+    apiKey: '',
+    model: 'gpt-4o',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  dashscope: {
+    provider: 'dashscope',
+    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    apiKey: '',
+    model: 'qwen-turbo',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  deepseek: {
+    provider: 'deepseek',
+    baseUrl: 'https://api.deepseek.com/v1',
+    apiKey: '',
+    model: 'deepseek-chat',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  doubao: {
+    provider: 'doubao',
+    baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
+    apiKey: '',
+    model: 'ep-20241203163449-j7x68',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  zhipu: {
+    provider: 'zhipu',
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+    apiKey: '',
+    model: 'glm-4-flash',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  wenxin: {
+    provider: 'wenxin',
+    baseUrl: 'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat',
+    apiKey: '',
+    model: 'ernie-4.0-turbo-8k',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  anthropic: {
+    provider: 'anthropic',
+    baseUrl: 'https://api.anthropic.com/v1',
+    apiKey: '',
+    model: 'claude-3-5-sonnet-20241022',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+  custom: {
+    provider: 'custom',
+    baseUrl: 'https://api.example.com/v1',
+    apiKey: '',
+    model: 'custom-model',
+    maxTokens: 8192,
+    temperature: 0.7,
+  },
+};
+
+export const DEFAULT_HOT_ARTICLE_SOURCES: HotArticleSource[] = [
+  {
+    id: 'wechat',
+    name: '微信公众号',
+    url: 'https://mp.weixin.qq.com',
+    platform: 'wechat',
+  },
+  {
+    id: 'toutiao',
+    name: '今日头条',
+    url: 'https://www.toutiao.com',
+    platform: 'toutiao',
+  },
+  {
+    id: 'tencent',
+    name: '腾讯新闻',
+    url: 'https://news.qq.com',
+    platform: 'tencent',
+  },
+  {
+    id: 'zhihu',
+    name: '知乎热榜',
+    url: 'https://www.zhihu.com/hot',
+    platform: 'zhihu',
+  },
+  {
+    id: 'weibo',
+    name: '微博热搜',
+    url: 'https://s.weibo.com/top/summary',
+    platform: 'weibo',
+  },
+  {
+    id: 'bilibili',
+    name: 'B站热门',
+    url: 'https://www.bilibili.com/v/popular',
+    platform: 'bilibili',
+  },
+  {
+    id: 'douyin',
+    name: '抖音热点',
+    url: 'https://www.douyin.com',
+    platform: 'douyin',
+  },
+  {
+    id: 'xiaohongshu',
+    name: '小红书热门',
+    url: 'https://www.xiaohongshu.com',
+    platform: 'xiaohongshu',
+  },
+];
+
 export const DEFAULT_APP_CONFIG: AppConfig = {
   llm: DEFAULT_LLM_CONFIGS.dashscope,
   aiDetection: DEFAULT_AI_DETECTION_CONFIGS.local,
   contentSafety: DEFAULT_CONTENT_SAFETY_CONFIGS.local,
   hotArticles: DEFAULT_HOT_ARTICLES_CONFIG,
-  imageGeneration: DEFAULT_IMAGE_GENERATION_CONFIGS.openai,
+  imageGeneration: DEFAULT_IMAGE_GENERATION_CONFIGS.dashscope,
+  polish: DEFAULT_POLISH_CONFIGS.dashscope,
 };
 
 // ==================== 配置存储 ====================
@@ -290,6 +467,15 @@ export function getImageGenerationConfig(): ImageGenerationConfig {
 export function saveImageGenerationConfig(config: Partial<ImageGenerationConfig>): void {
   const current = getAppConfig();
   saveAppConfig({ ...current, imageGeneration: { ...current.imageGeneration, ...config } });
+}
+
+export function getPolishConfig(): PolishConfig {
+  return getAppConfig().polish;
+}
+
+export function savePolishConfig(config: Partial<PolishConfig>): void {
+  const current = getAppConfig();
+  saveAppConfig({ ...current, polish: { ...current.polish, ...config } });
 }
 
 // 兼容旧版 API 配置
@@ -926,6 +1112,36 @@ async function callStabilityImageApi(prompt: string, config: ImageGenerationConf
 
   const data = await response.json();
   return data.artifacts?.[0]?.url || '';
+}
+
+// ==================== AI 润色 API ====================
+
+export async function callPolishApi(
+  content: string,
+  mode: string,
+  config?: Partial<PolishConfig>
+): Promise<string> {
+  const polishConfig = { ...getPolishConfig(), ...config };
+
+  if (!polishConfig.apiKey) {
+    throw new Error('请先在 API 设置中配置你的润色 API Key');
+  }
+
+  const systemPrompts: Record<string, string> = {
+    normal: '你是一个专业的文案编辑，请对以下文章进行润色优化，使语言更流畅自然，保持原文的核心意思和整体风格。',
+    reduce_ai: '你是一个专业的内容改写专家，请重写以下文章，使其更像人工创作的风格。要求：1. 增加口语化表达和个人化语气；2. 避免AI常用的模板化句式；3. 增加自然的语气词和过渡；4. 保持原文的核心意思不变；5. 让文章读起来更有温度和真实感。',
+    enhance: '你是一个专业的自媒体运营专家，请对以下文章进行内容增强，使其更有吸引力和传播性。要求：1. 优化标题（如果有）；2. 增强开头的代入感；3. 添加互动引导语；4. 优化段落节奏；5. 增加结尾互动。',
+    format: '你是一个专业的排版编辑，请对以下文章进行智能排版优化。要求：1. 添加合适的标题层级（#、##、###）；2. 将长段落拆分为易读的短段落；3. 适当添加列表格式；4. 优化整体结构，提升可读性；5. 保持原文的核心内容不变。',
+  };
+
+  const prompt = `${systemPrompts[mode] || systemPrompts.normal}\n\n原文：\n${content}`;
+
+  switch (polishConfig.provider) {
+    case 'anthropic':
+      return callAnthropicApi(prompt, undefined, polishConfig as any);
+    default:
+      return callOpenAiCompatibleApi(prompt, undefined, polishConfig as any);
+  }
 }
 
 // 模拟 API 调用
