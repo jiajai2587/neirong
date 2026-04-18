@@ -8,9 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Settings, Key, Globe, Save, Check, AlertTriangle, TestTube, Eye, EyeOff, MessageCircle, Bot, Shield, ScanFace, Rss, ExternalLink } from 'lucide-react';
+import { Settings, Key, Globe, Save, Check, AlertTriangle, TestTube, Eye, EyeOff, MessageCircle, Bot, Shield, ScanFace, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ApiConfig, AiDetectionConfig, ContentSafetyConfig, LlmProvider, AiDetectionProvider, ContentSafetyProvider, ImageGenerationConfig, ImageGenerationProvider, HotArticlesConfig } from '@/lib/types';
+import type { ApiConfig, AiDetectionConfig, ContentSafetyConfig, LlmProvider, AiDetectionProvider, ContentSafetyProvider, ImageGenerationConfig, ImageGenerationProvider } from '@/lib/types';
 import {
   getAppConfig,
   saveAppConfig,
@@ -22,15 +22,11 @@ import {
   saveContentSafetyConfig,
   getImageGenerationConfig,
   saveImageGenerationConfig,
-  getHotArticlesConfig,
-  saveHotArticlesConfig,
   callAiApi,
   DEFAULT_LLM_CONFIGS,
   DEFAULT_AI_DETECTION_CONFIGS,
   DEFAULT_CONTENT_SAFETY_CONFIGS,
   DEFAULT_IMAGE_GENERATION_CONFIGS,
-  DEFAULT_HOT_ARTICLES_CONFIG,
-  DEFAULT_HOT_ARTICLE_SOURCES,
 } from '@/lib/api';
 
 export function ApiSettingsView() {
@@ -39,7 +35,6 @@ export function ApiSettingsView() {
   const [aiDetectionConfig, setAiDetectionConfig] = useState<AiDetectionConfig>(getAiDetectionConfig());
   const [contentSafetyConfig, setContentSafetyConfig] = useState<ContentSafetyConfig>(getContentSafetyConfig());
   const [imageGenerationConfig, setImageGenerationConfig] = useState<ImageGenerationConfig>(getImageGenerationConfig());
-  const [hotArticlesConfig, setHotArticlesConfig] = useState<HotArticlesConfig>(getHotArticlesConfig());
   const [showLlmKey, setShowLlmKey] = useState(false);
   const [showAiDetectionKey, setShowAiDetectionKey] = useState(false);
   const [showContentSafetyKey, setShowContentSafetyKey] = useState(false);
@@ -92,62 +87,9 @@ export function ApiSettingsView() {
     saveAiDetectionConfig(aiDetectionConfig);
     saveContentSafetyConfig(contentSafetyConfig);
     saveImageGenerationConfig(imageGenerationConfig);
-    saveHotArticlesConfig(hotArticlesConfig);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
-  }, [llmConfig, aiDetectionConfig, contentSafetyConfig, imageGenerationConfig, hotArticlesConfig]);
-
-  const handleTestHotArticles = useCallback(async () => {
-    if (!hotArticlesConfig.apiUrl) {
-      setTestResult({ success: false, message: '请先输入API地址' });
-      return;
-    }
-    
-    setTesting(true);
-    setTestResult(null);
-    
-    try {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      if (hotArticlesConfig.apiKey) {
-        headers['Authorization'] = `Bearer ${hotArticlesConfig.apiKey}`;
-      }
-
-      const response = await fetch(hotArticlesConfig.apiUrl, {
-        method: 'GET',
-        headers,
-        timeout: 10000,
-      });
-
-      if (!response.ok) {
-        throw new Error(`API 请求失败: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      // 检查响应格式
-      const articles = data.articles || data.data || data;
-      if (Array.isArray(articles)) {
-        setTestResult({ 
-          success: true, 
-          message: `测试成功！获取到 ${articles.length} 篇文章` 
-        });
-      } else {
-        setTestResult({ 
-          success: false, 
-          message: 'API 响应格式不正确，请确保返回文章数组或包含 articles/data 字段' 
-        });
-      }
-    } catch (error: any) {
-      setTestResult({ 
-        success: false, 
-        message: error.message || '测试失败，请检查网络连接或API地址' 
-      });
-    } finally {
-      setTesting(false);
-    }
-  }, [hotArticlesConfig]);
+  }, [llmConfig, aiDetectionConfig, contentSafetyConfig, imageGenerationConfig]);
 
   const handleTestLlm = useCallback(async () => {
     if (!llmConfig.apiKey) {
@@ -229,7 +171,7 @@ export function ApiSettingsView() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="llm" className="flex items-center gap-2">
                 <Bot className="w-4 h-4" />
                 大模型
@@ -245,10 +187,6 @@ export function ApiSettingsView() {
               <TabsTrigger value="image-generation" className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4" />
                 图片生成
-              </TabsTrigger>
-              <TabsTrigger value="hot-articles" className="flex items-center gap-2">
-                <Rss className="w-4 h-4" />
-                热门文章
               </TabsTrigger>
             </TabsList>
 
@@ -772,97 +710,6 @@ export function ApiSettingsView() {
                     '测试连接'
                   )}
                 </Button>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="hot-articles" className="space-y-4 mt-4">
-              <div className="space-y-3 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
-                <p className="font-medium text-foreground">📰 热门文章配置</p>
-                <p>配置用于采集各平台热门文章的 API 接口。</p>
-                <p className="text-xs mt-2 text-amber-500 flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3" />
-                  API Key 仅保存在本地浏览器中，不会上传到任何服务器
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="hot-articles-use-custom">启用自定义接口</Label>
-                  <Switch
-                    id="hot-articles-use-custom"
-                    checked={hotArticlesConfig.useCustom}
-                    onCheckedChange={(checked) => setHotArticlesConfig(prev => ({ ...prev, useCustom: checked }))}
-                  />
-                </div>
-                
-                {hotArticlesConfig.useCustom && (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="hot-articles-platform">平台名称</Label>
-                      <Select
-                        value={hotArticlesConfig.platform || 'all'}
-                        onValueChange={(value) => setHotArticlesConfig(prev => ({ ...prev, platform: value }))}
-                      >
-                        <SelectTrigger id="hot-articles-platform">
-                          <SelectValue placeholder="选择平台" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">全部平台</SelectItem>
-                          {DEFAULT_HOT_ARTICLE_SOURCES.map(source => (
-                            <SelectItem key={source.id} value={source.id}>
-                              {source.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="hot-articles-api-url">API 地址</Label>
-                      <Input
-                        id="hot-articles-api-url"
-                        placeholder="https://api.example.com/hot-articles"
-                        value={hotArticlesConfig.apiUrl}
-                        onChange={e => setHotArticlesConfig(prev => ({ ...prev, apiUrl: e.target.value }))}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="hot-articles-api-key">API Key（可选）</Label>
-                      <Input
-                        id="hot-articles-api-key"
-                        placeholder="sk-..."
-                        value={hotArticlesConfig.apiKey || ''}
-                        onChange={e => setHotArticlesConfig(prev => ({ ...prev, apiKey: e.target.value }))}
-                      />
-                    </div>
-                    
-                    <div className="text-sm text-muted-foreground">
-                      <p>API 响应格式要求：</p>
-                      <ul className="list-disc list-inside mt-1">
-                        <li>直接返回文章数组，或包含 articles/data 字段</li>
-                        <li>文章字段：title, source, platform, views, url, tags, publishDate</li>
-                      </ul>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={handleTestHotArticles} 
-                    disabled={testing || !hotArticlesConfig.apiUrl}
-                    variant="outline"
-                  >
-                    {testing ? (
-                      <span className="flex items-center gap-2">
-                        <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
-                        测试中...
-                      </span>
-                    ) : (
-                      '测试连接'
-                    )}
-                  </Button>
-                </div>
               </div>
             </TabsContent>
           </Tabs>
