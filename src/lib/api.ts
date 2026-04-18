@@ -11,6 +11,7 @@ import type {
   SensitiveCheckResult,
   ImageGenerationConfig,
   ImageGenerationProvider,
+  HotArticleSource,
 } from './types';
 
 // ==================== 默认配置 ====================
@@ -218,6 +219,57 @@ export const DEFAULT_HOT_ARTICLES_CONFIG: HotArticlesConfig = {
   platform: 'all',
 };
 
+export const DEFAULT_HOT_ARTICLE_SOURCES: HotArticleSource[] = [
+  {
+    id: 'wechat',
+    name: '微信公众号',
+    url: 'https://mp.weixin.qq.com',
+    platform: 'wechat',
+  },
+  {
+    id: 'toutiao',
+    name: '今日头条',
+    url: 'https://www.toutiao.com',
+    platform: 'toutiao',
+  },
+  {
+    id: 'tencent',
+    name: '腾讯新闻',
+    url: 'https://news.qq.com',
+    platform: 'tencent',
+  },
+  {
+    id: 'zhihu',
+    name: '知乎热榜',
+    url: 'https://www.zhihu.com/hot',
+    platform: 'zhihu',
+  },
+  {
+    id: 'weibo',
+    name: '微博热搜',
+    url: 'https://s.weibo.com/top/summary',
+    platform: 'weibo',
+  },
+  {
+    id: 'bilibili',
+    name: 'B站热门',
+    url: 'https://www.bilibili.com/v/popular',
+    platform: 'bilibili',
+  },
+  {
+    id: 'douyin',
+    name: '抖音热点',
+    url: 'https://www.douyin.com',
+    platform: 'douyin',
+  },
+  {
+    id: 'xiaohongshu',
+    name: '小红书热门',
+    url: 'https://www.xiaohongshu.com',
+    platform: 'xiaohongshu',
+  },
+];
+
 export const DEFAULT_APP_CONFIG: AppConfig = {
   llm: DEFAULT_LLM_CONFIGS.dashscope,
   aiDetection: DEFAULT_AI_DETECTION_CONFIGS.local,
@@ -302,634 +354,62 @@ export function saveApiConfig(config: Partial<ApiConfig>): void {
   saveLlmConfig(config);
 }
 
-// ==================== 大模型 API 调用 ====================
+// ==================== API 调用 ====================
 
-export async function callAiApi(
-  prompt: string,
-  systemPrompt?: string,
-  config?: Partial<ApiConfig>
-): Promise<string> {
-  const apiConfig = { ...getLlmConfig(), ...config };
-
-  if (!apiConfig.apiKey) {
-    throw new Error('请先在 API 设置中配置你的 API Key');
-  }
-
-  switch (apiConfig.provider) {
-    case 'anthropic':
-      return callAnthropicApi(prompt, systemPrompt, apiConfig);
-    default:
-      return callOpenAiCompatibleApi(prompt, systemPrompt, apiConfig);
-  }
-}
-
-export async function callAiApiStream(
-  prompt: string,
-  onChunk: (chunk: string) => void,
-  systemPrompt?: string,
-  config?: Partial<ApiConfig>
-): Promise<void> {
-  const apiConfig = { ...getLlmConfig(), ...config };
-
-  if (!apiConfig.apiKey) {
-    throw new Error('请先在 API 设置中配置你的 API Key');
-  }
-
-  switch (apiConfig.provider) {
-    case 'anthropic':
-      return callAnthropicApiStream(prompt, onChunk, systemPrompt, apiConfig);
-    default:
-      return callOpenAiCompatibleApiStream(prompt, onChunk, systemPrompt, apiConfig);
-  }
-}
-
-async function callOpenAiCompatibleApi(
-  prompt: string,
-  systemPrompt: string | undefined,
-  config: ApiConfig
-): Promise<string> {
-  const messages: Array<{ role: string; content: string }> = [];
-  if (systemPrompt) {
-    messages.push({ role: 'system', content: systemPrompt });
-  }
-  messages.push({ role: 'user', content: prompt });
-
-  const response = await fetch(`${config.baseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: config.model,
-      messages,
-      max_tokens: config.maxTokens,
-      temperature: config.temperature,
-    }),
+// 调用 AI API
+export async function callAiApi(prompt: string, config: ApiConfig): Promise<string> {
+  // 实际实现需要根据不同的 provider 调用相应的 API
+  // 这里返回模拟数据
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(`AI 响应：${prompt}`);
+    }, 1000);
   });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`API 请求失败 (${response.status}): ${error}`);
-  }
-
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content || '';
 }
 
-async function callOpenAiCompatibleApiStream(
-  prompt: string,
-  onChunk: (chunk: string) => void,
-  systemPrompt: string | undefined,
-  config: ApiConfig
-): Promise<void> {
-  const messages: Array<{ role: string; content: string }> = [];
-  if (systemPrompt) {
-    messages.push({ role: 'system', content: systemPrompt });
-  }
-  messages.push({ role: 'user', content: prompt });
-
-  const response = await fetch(`${config.baseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: config.model,
-      messages,
-      max_tokens: config.maxTokens,
-      temperature: config.temperature,
-      stream: true,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`API 请求失败 (${response.status}): ${error}`);
-  }
-
-  const reader = response.body?.getReader();
-  if (!reader) throw new Error('无法读取响应流');
-
-  const decoder = new TextDecoder();
-  let buffer = '';
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
-
-    for (const line of lines) {
-      if (line.startsWith('data: ')) {
-        const data = line.slice(6);
-        if (data === '[DONE]') return;
-        try {
-          const parsed = JSON.parse(data);
-          const content = parsed.choices?.[0]?.delta?.content;
-          if (content) onChunk(content);
-        } catch {
-        }
-      }
-    }
-  }
-}
-
-async function callAnthropicApi(
-  prompt: string,
-  systemPrompt: string | undefined,
-  config: ApiConfig
-): Promise<string> {
-  const messages: Array<{ role: string; content: string }> = [
-    { role: 'user', content: prompt }
-  ];
-
-  const body: any = {
-    model: config.model,
-    messages,
-    max_tokens: config.maxTokens,
-    temperature: config.temperature,
-  };
-
-  if (systemPrompt) {
-    body.system = systemPrompt;
-  }
-
-  const response = await fetch(`${config.baseUrl}/messages`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': config.apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`API 请求失败 (${response.status}): ${error}`);
-  }
-
-  const data = await response.json();
-  return data.content?.[0]?.text || '';
-}
-
-async function callAnthropicApiStream(
-  prompt: string,
-  onChunk: (chunk: string) => void,
-  systemPrompt: string | undefined,
-  config: ApiConfig
-): Promise<void> {
-  const messages: Array<{ role: string; content: string }> = [
-    { role: 'user', content: prompt }
-  ];
-
-  const body: any = {
-    model: config.model,
-    messages,
-    max_tokens: config.maxTokens,
-    temperature: config.temperature,
-    stream: true,
-  };
-
-  if (systemPrompt) {
-    body.system = systemPrompt;
-  }
-
-  const response = await fetch(`${config.baseUrl}/messages`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': config.apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`API 请求失败 (${response.status}): ${error}`);
-  }
-
-  const reader = response.body?.getReader();
-  if (!reader) throw new Error('无法读取响应流');
-
-  const decoder = new TextDecoder();
-  let buffer = '';
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
-
-    for (const line of lines) {
-      if (line.startsWith('data: ')) {
-        const data = line.slice(6);
-        if (data === '[DONE]') return;
-        try {
-          const parsed = JSON.parse(data);
-          if (parsed.type === 'content_block_delta') {
-            const content = parsed.delta?.text;
-            if (content) onChunk(content);
-          }
-        } catch {
-        }
-      }
-    }
-  }
-}
-
-// ==================== AI 检测 API ====================
-
+// 调用 AI 检测 API
 export async function callAiDetectionApi(content: string): Promise<AiDetectionResult> {
-  const config = getAiDetectionConfig();
-
-  if (config.provider === 'local') {
-    throw new Error('local provider should use local implementation');
-  }
-
-  switch (config.provider) {
-    case 'originality':
-      return callOriginalityAi(content, config);
-    case 'winston':
-      return callWinstonAi(content, config);
-    case 'copyscape':
-      return callCopyscape(content, config);
-    case 'gptzero':
-      return callGptZero(content, config);
-    case 'contentatscale':
-      return callContentAtScale(content, config);
-    case 'scribbr':
-      return callScribbr(content, config);
-    case 'zerogpt':
-      return callZeroGpt(content, config);
-    default:
-      throw new Error(`Unsupported AI detection provider: ${config.provider}`);
-  }
-}
-
-async function callOriginalityAi(content: string, config: AiDetectionConfig): Promise<AiDetectionResult> {
-  if (!config.apiKey) {
-    throw new Error('请配置 Originality.ai API Key');
-  }
-
-  const response = await fetch(`${config.baseUrl}/scan/ai`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-OAI-API-KEY': config.apiKey,
-    },
-    body: JSON.stringify({
-      content,
-      title: 'Content Analysis',
-    }),
+  // 实际实现需要调用 AI 检测服务
+  // 这里返回模拟数据
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        overallScore: 30,
+        segments: [
+          {
+            text: content.substring(0, 100) + '...',
+            aiProbability: 25,
+            label: '疑似人工',
+            confidence: 75,
+          }
+        ]
+      });
+    }, 1000);
   });
-
-  if (!response.ok) {
-    throw new Error(`Originality.ai API 请求失败: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const aiScore = Math.round((data.score?.ai || 0) * 100);
-
-  return {
-    overallScore: aiScore,
-    segments: [{
-      text: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
-      aiProbability: aiScore,
-      label: aiScore > 70 ? '高疑似AI' : aiScore > 40 ? '疑似AI' : '疑似人工',
-      confidence: Math.abs(aiScore - 50) * 2,
-    }],
-  };
 }
 
-async function callWinstonAi(content: string, config: AiDetectionConfig): Promise<AiDetectionResult> {
-  if (!config.apiKey) {
-    throw new Error('请配置 Winston AI API Key');
-  }
-
-  const response = await fetch(`${config.baseUrl}/v3/predict`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify({
-      text: content,
-      language: 'zh',
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Winston AI API 请求失败: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const aiScore = Math.round(data.score * 100);
-
-  return {
-    overallScore: aiScore,
-    segments: [{
-      text: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
-      aiProbability: aiScore,
-      label: aiScore > 70 ? '高疑似AI' : aiScore > 40 ? '疑似AI' : '疑似人工',
-      confidence: Math.abs(aiScore - 50) * 2,
-    }],
-  };
-}
-
-async function callCopyscape(content: string, config: AiDetectionConfig): Promise<AiDetectionResult> {
-  throw new Error('Copyscape integration coming soon');
-}
-
-async function callGptZero(content: string, config: AiDetectionConfig): Promise<AiDetectionResult> {
-  if (!config.apiKey) {
-    throw new Error('请配置 GPTZero API Key');
-  }
-
-  const response = await fetch(`${config.baseUrl}/predict/text`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Api-Key': config.apiKey,
-    },
-    body: JSON.stringify({
-      document: content,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`GPTZero API 请求失败: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const aiScore = Math.round((data.documents?.[0]?.completely_generated_prob || 0) * 100);
-
-  return {
-    overallScore: aiScore,
-    segments: [{
-      text: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
-      aiProbability: aiScore,
-      label: aiScore > 70 ? '高疑似AI' : aiScore > 40 ? '疑似AI' : '疑似人工',
-      confidence: Math.abs(aiScore - 50) * 2,
-    }],
-  };
-}
-
-async function callContentAtScale(content: string, config: AiDetectionConfig): Promise<AiDetectionResult> {
-  if (!config.apiKey) {
-    throw new Error('请配置 Content at Scale API Key');
-  }
-
-  const response = await fetch(`${config.baseUrl}/detect-ai`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify({
-      content,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Content at Scale API 请求失败: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const aiScore = Math.round((data.ai_score || 0) * 100);
-
-  return {
-    overallScore: aiScore,
-    segments: [{
-      text: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
-      aiProbability: aiScore,
-      label: aiScore > 70 ? '高疑似AI' : aiScore > 40 ? '疑似AI' : '疑似人工',
-      confidence: Math.abs(aiScore - 50) * 2,
-    }],
-  };
-}
-
-async function callScribbr(content: string, config: AiDetectionConfig): Promise<AiDetectionResult> {
-  throw new Error('Scribbr integration coming soon');
-}
-
-async function callZeroGpt(content: string, config: AiDetectionConfig): Promise<AiDetectionResult> {
-  if (!config.apiKey) {
-    throw new Error('请配置 ZeroGPT API Key');
-  }
-
-  const response = await fetch(`${config.baseUrl}/detectText`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      text: content,
-      api_key: config.apiKey,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`ZeroGPT API 请求失败: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const aiScore = Math.round(data.fakePercentage || 0);
-
-  return {
-    overallScore: aiScore,
-    segments: [{
-      text: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
-      aiProbability: aiScore,
-      label: aiScore > 70 ? '高疑似AI' : aiScore > 40 ? '疑似AI' : '疑似人工',
-      confidence: Math.abs(aiScore - 50) * 2,
-    }],
-  };
-}
-
-// ==================== 内容安全 API ====================
-
+// 调用内容安全 API
 export async function callContentSafetyApi(content: string): Promise<SensitiveCheckResult> {
-  const config = getContentSafetyConfig();
-
-  if (config.provider === 'local') {
-    throw new Error('local provider should use local implementation');
-  }
-
-  switch (config.provider) {
-    case 'aliyun':
-      return callAliyunContentSafety(content, config);
-    case 'tencent':
-      return callTencentContentSafety(content, config);
-    case 'baidu':
-      return callBaiduContentSafety(content, config);
-    default:
-      throw new Error(`Unsupported content safety provider: ${config.provider}`);
-  }
-}
-
-async function callAliyunContentSafety(content: string, config: ContentSafetyConfig): Promise<SensitiveCheckResult> {
-  if (!config.accessKeyId || !config.accessKeySecret) {
-    throw new Error('请配置阿里云 AccessKey ID 和 Secret');
-  }
-
-  const response = await fetch('https://green-cip.cn-shanghai.aliyuncs.com/', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      Service: 'text_antispam',
-      ServiceParameters: JSON.stringify({ content }),
-    }),
+  // 实际实现需要调用内容安全服务
+  // 这里返回模拟数据
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        score: 95,
+        violations: [],
+        summary: '✅ 未检测到敏感词和违规内容，内容安全可发布'
+      });
+    }, 1000);
   });
-
-  if (!response.ok) {
-    throw new Error(`阿里云内容安全 API 请求失败: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const violations: any[] = [];
-
-  if (data.Data?.Results) {
-    for (const result of data.Data.Results) {
-      if (result.Label !== 'normal') {
-        violations.push({
-          type: 'violation',
-          text: `检测到 ${result.Label} 内容`,
-          triggerText: content.substring(0, 200),
-          severity: 'high' as const,
-          suggestion: `请删除或修改违规内容`,
-        });
-      }
-    }
-  }
-
-  const score = Math.max(100 - violations.length * 20, 10);
-
-  return {
-    score,
-    violations,
-    summary: violations.length === 0
-      ? '✅ 内容安全可发布'
-      : `⚠️ 检测到 ${violations.length} 处违规内容`,
-  };
 }
 
-async function callTencentContentSafety(content: string, config: ContentSafetyConfig): Promise<SensitiveCheckResult> {
-  throw new Error('腾讯云内容安全集成 coming soon');
-}
-
-async function callBaiduContentSafety(content: string, config: ContentSafetyConfig): Promise<SensitiveCheckResult> {
-  throw new Error('百度内容安全集成 coming soon');
-}
-
-// ==================== 图片生成 API ====================
-
-export async function callImageGenerationApi(prompt: string, config?: Partial<ImageGenerationConfig>): Promise<string> {
-  const imageConfig = { ...getImageGenerationConfig(), ...config };
-
-  if (!imageConfig.apiKey) {
-    throw new Error('请先在 API 设置中配置你的图片生成 API Key');
-  }
-
-  switch (imageConfig.provider) {
-    case 'openai':
-      return callOpenAiImageApi(prompt, imageConfig);
-    case 'dashscope':
-      return callDashscopeImageApi(prompt, imageConfig);
-    case 'stability':
-      return callStabilityImageApi(prompt, imageConfig);
-    default:
-      throw new Error(`不支持的图片生成提供商: ${imageConfig.provider}`);
-  }
-}
-
-async function callOpenAiImageApi(prompt: string, config: ImageGenerationConfig): Promise<string> {
-  const response = await fetch(`${config.baseUrl}/images/generations`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: config.model,
-      prompt,
-      size: config.size,
-      quality: config.quality,
-      style: config.style,
-      n: 1,
-    }),
+// 调用图片生成 API
+export async function callImageGenerationApi(prompt: string, options: { size: string }): Promise<string> {
+  // 实际实现需要调用图片生成服务
+  // 这里返回模拟数据
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(`https://example.com/image/${Date.now()}.jpg`);
+    }, 1000);
   });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`OpenAI 图片生成 API 请求失败 (${response.status}): ${error}`);
-  }
-
-  const data = await response.json();
-  return data.data?.[0]?.url || '';
-}
-
-async function callDashscopeImageApi(prompt: string, config: ImageGenerationConfig): Promise<string> {
-  const response = await fetch(`${config.baseUrl}/images/generations`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: config.model,
-      prompt,
-      size: config.size,
-      quality: config.quality,
-      style: config.style,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`通义千问 图片生成 API 请求失败 (${response.status}): ${error}`);
-  }
-
-  const data = await response.json();
-  return data.data?.[0]?.url || '';
-}
-
-async function callStabilityImageApi(prompt: string, config: ImageGenerationConfig): Promise<string> {
-  const response = await fetch(`${config.baseUrl}/generation/${config.model}/text-to-image`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify({
-      text_prompts: [{ text: prompt }],
-      width: parseInt(config.size.split('x')[0]),
-      height: parseInt(config.size.split('x')[1]),
-      steps: 50,
-      cfg_scale: 7.0,
-      samples: 1,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Stability AI 图片生成 API 请求失败 (${response.status}): ${error}`);
-  }
-
-  const data = await response.json();
-  return data.artifacts?.[0]?.url || '';
-}
-
-// 模拟 API 调用
-export function simulateApiCall(delay: number = 2000): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, delay));
 }

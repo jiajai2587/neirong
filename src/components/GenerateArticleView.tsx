@@ -7,9 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Sparkles, Copy, Check, FileText, Loader2, Wand2, RefreshCw, AlertCircle, Image, Download } from 'lucide-react';
+import { Sparkles, Copy, Check, FileText, Loader2, Wand2, RefreshCw, AlertCircle, Image, Download, Film } from 'lucide-react';
 import { generateArticle } from '@/lib/analysis';
 import { getApiConfig, getImageGenerationConfig, callImageGenerationApi } from '@/lib/api';
+import { video_generate } from '@/lib/videoGenerator';
 
 interface GenerateArticleProps {
   onContentGenerated: (content: string) => void;
@@ -36,6 +37,12 @@ export function GenerateArticleView({ onContentGenerated }: GenerateArticleProps
   const [generatedImage, setGeneratedImage] = useState('');
   const [imagePrompt, setImagePrompt] = useState('');
   const [imageSize, setImageSize] = useState('1024x1024');
+  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+  const [generatedVideo, setGeneratedVideo] = useState('');
+  const [videoPrompt, setVideoPrompt] = useState('');
+  const [videoRatio, setVideoRatio] = useState('16:9');
+  const [videoDuration, setVideoDuration] = useState(5);
+  const [videoResolution, setVideoResolution] = useState('720p');
 
   const handleGenerate = async () => {
     if (!topic.trim()) return;
@@ -53,6 +60,9 @@ export function GenerateArticleView({ onContentGenerated }: GenerateArticleProps
         // 自动生成图片提示词
         const autoPrompt = `为文章"${topic}"生成一张适合${platform}平台的配图，风格为${style}，图片需要与文章内容相关，吸引人且专业。`;
         setImagePrompt(autoPrompt);
+        // 自动生成视频提示词
+        const autoVideoPrompt = `为文章"${topic}"生成一段适合${platform}平台的视频，风格为${style}，视频内容需要与文章主题相关，吸引人且专业。`;
+        setVideoPrompt(autoVideoPrompt);
       }
     } catch {
       // Fallback
@@ -61,6 +71,9 @@ export function GenerateArticleView({ onContentGenerated }: GenerateArticleProps
       // 自动生成图片提示词
       const autoPrompt = `为文章"${topic}"生成一张适合${platform}平台的配图，风格为${style}，图片需要与文章内容相关，吸引人且专业。`;
       setImagePrompt(autoPrompt);
+      // 自动生成视频提示词
+      const autoVideoPrompt = `为文章"${topic}"生成一段适合${platform}平台的视频，风格为${style}，视频内容需要与文章主题相关，吸引人且专业。`;
+      setVideoPrompt(autoVideoPrompt);
     }
 
     setIsGenerating(false);
@@ -89,6 +102,44 @@ export function GenerateArticleView({ onContentGenerated }: GenerateArticleProps
       const link = document.createElement('a');
       link.href = generatedImage;
       link.download = `article-image-${Date.now()}.jpg`;
+      link.click();
+    }
+  };
+
+  const handleGenerateVideo = async () => {
+    if (!videoPrompt.trim()) return;
+    setIsGeneratingVideo(true);
+    setGeneratedVideo('');
+
+    try {
+      const result = await video_generate([{
+        video_name: `video-${Date.now()}`,
+        prompt: videoPrompt,
+        ratio: videoRatio,
+        duration: videoDuration,
+        resolution: videoResolution,
+        watermark: false
+      }]);
+
+      if (result.status === 'success' && result.success_list.length > 0) {
+        setGeneratedVideo(result.success_list[0].url);
+      } else {
+        const errorMessage = result.error_details?.[0]?.error || '视频生成失败';
+        alert('视频生成失败: ' + errorMessage);
+      }
+    } catch (error: any) {
+      console.error('视频生成失败:', error);
+      alert('视频生成失败: ' + (error.message || '未知错误'));
+    }
+
+    setIsGeneratingVideo(false);
+  };
+
+  const handleDownloadVideo = () => {
+    if (generatedVideo) {
+      const link = document.createElement('a');
+      link.href = generatedVideo;
+      link.download = `article-video-${Date.now()}.mp4`;
       link.click();
     }
   };
@@ -388,6 +439,118 @@ export function GenerateArticleView({ onContentGenerated }: GenerateArticleProps
                         >
                           <Download className="w-4 h-4" />
                           下载图片
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 视频生成 */}
+              <div className="mt-6 border-t pt-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Film className="w-4 h-4 text-violet-500" />
+                  <h3 className="text-base font-medium">AI 生成视频</h3>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">视频提示词</Label>
+                    <Textarea
+                      value={videoPrompt}
+                      onChange={e => setVideoPrompt(e.target.value)}
+                      placeholder="描述你想要的视频内容，例如：为文章'AI写作技巧'生成一段适合微信公众号的视频，风格为干货教程，视频内容需要与文章主题相关，吸引人且专业。"
+                      className="min-h-[100px]"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">视频比例</Label>
+                      <Select value={videoRatio} onValueChange={setVideoRatio}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="16:9">16:9</SelectItem>
+                          <SelectItem value="9:16">9:16</SelectItem>
+                          <SelectItem value="1:1">1:1</SelectItem>
+                          <SelectItem value="4:3">4:3</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">视频时长</Label>
+                      <Select value={videoDuration.toString()} onValueChange={(v) => setVideoDuration(parseInt(v))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="2">2秒</SelectItem>
+                          <SelectItem value="5">5秒</SelectItem>
+                          <SelectItem value="8">8秒</SelectItem>
+                          <SelectItem value="10">10秒</SelectItem>
+                          <SelectItem value="12">12秒</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">视频分辨率</Label>
+                      <Select value={videoResolution} onValueChange={setVideoResolution}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="480p">480p</SelectItem>
+                          <SelectItem value="720p">720p</SelectItem>
+                          <SelectItem value="1080p">1080p</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button 
+                      onClick={handleGenerateVideo} 
+                      disabled={!videoPrompt.trim() || isGeneratingVideo}
+                      className="w-full sm:w-auto"
+                    >
+                      {isGeneratingVideo ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          生成视频中...
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-2">
+                          <Film className="w-4 h-4" />
+                          生成视频
+                        </span>
+                      )}
+                    </Button>
+                  </div>
+
+                  {generatedVideo && (
+                    <div className="mt-4 border border-border rounded-lg p-4">
+                      <h4 className="text-sm font-medium mb-3">生成结果</h4>
+                      <div className="flex flex-col items-center">
+                        <video 
+                          src={generatedVideo} 
+                          width="640" 
+                          controls 
+                          className="max-w-full rounded-lg"
+                        >
+                          您的浏览器不支持视频播放
+                        </video>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={handleDownloadVideo}
+                          className="mt-4 flex items-center gap-2"
+                        >
+                          <Download className="w-4 h-4" />
+                          下载视频
                         </Button>
                       </div>
                     </div>
