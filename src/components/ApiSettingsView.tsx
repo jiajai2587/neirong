@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,9 +7,9 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Settings, Key, Globe, Save, Check, AlertTriangle, TestTube, Eye, EyeOff, MessageCircle, Bot, Shield, ScanFace, Edit3, TrendingUp } from 'lucide-react';
+import { Settings, Key, Globe, Save, Check, AlertTriangle, TestTube, Eye, EyeOff, MessageCircle, Bot, Shield, ScanFace, Edit3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ApiConfig, AiDetectionConfig, ContentSafetyConfig, LlmProvider, AiDetectionProvider, ContentSafetyProvider, ImageGenerationConfig, ImageGenerationProvider, PolishConfig, PolishProvider, HotArticleSource } from '@/lib/types';
+import type { ApiConfig, AiDetectionConfig, ContentSafetyConfig, LlmProvider, AiDetectionProvider, ContentSafetyProvider, ImageGenerationConfig, ImageGenerationProvider, PolishConfig, PolishProvider } from '@/lib/types';
 import {
   getAppConfig,
   saveAppConfig,
@@ -29,7 +29,6 @@ import {
   DEFAULT_CONTENT_SAFETY_CONFIGS,
   DEFAULT_IMAGE_GENERATION_CONFIGS,
   DEFAULT_POLISH_CONFIGS,
-  DEFAULT_HOT_ARTICLE_SOURCES,
 } from '@/lib/api';
 
 export function ApiSettingsView() {
@@ -149,7 +148,7 @@ export function ApiSettingsView() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="llm" className="flex items-center gap-2">
                 <Bot className="w-4 h-4" />
                 大模型
@@ -169,10 +168,6 @@ export function ApiSettingsView() {
               <TabsTrigger value="polish" className="flex items-center gap-2">
                 <Edit3 className="w-4 h-4" />
                 AI 润色
-              </TabsTrigger>
-              <TabsTrigger value="hot-articles" className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4" />
-                热门文章
               </TabsTrigger>
             </TabsList>
 
@@ -806,32 +801,6 @@ export function ApiSettingsView() {
                       step={0.1}
                     />
                   </div>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="hot-articles" className="space-y-4 mt-4">
-              <div className="space-y-3 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
-                <p className="font-medium text-foreground">📰 热门文章来源配置</p>
-                <p>配置热门文章采集的来源平台。</p>
-              </div>
-
-              <div className="space-y-3">
-                <Label className="text-sm font-medium block">热门文章来源 (点击名称可直接跳转到对应平台)</Label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {DEFAULT_HOT_ARTICLE_SOURCES.map((source: HotArticleSource) => (
-                    <Card key={source.id} className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => window.open(source.url, '_blank')}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-sm">{source.name}</p>
-                            <p className="text-xs text-muted-foreground mt-1">{source.url}</p>
-                          </div>
-                          <Globe className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
                 </div>
               </div>
             </TabsContent>

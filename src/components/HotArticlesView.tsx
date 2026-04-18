@@ -345,9 +345,14 @@ export function HotArticlesView() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <h3 className="text-sm font-medium leading-snug group-hover:text-primary transition-colors">
+                          <a 
+                            href={article.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-medium leading-snug group-hover:text-primary transition-colors hover:underline"
+                          >
                             {article.title}
-                          </h3>
+                          </a>
                           <div className="flex items-center gap-1 flex-shrink-0">
                             <button
                               onClick={() => handleCopyTitle(article.title, i)}
